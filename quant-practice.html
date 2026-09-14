@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quant practice</title>
+
+<!-- Optional: LaTeX rendering. Works when online; if offline, maths shows as raw $...$ text. -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+<style>
+  :root {
+    --bg: #0f1b2d;          /* deep navy page */
+    --panel: #162640;       /* question panel */
+    --panel-edge: #24395a;
+    --ink: #e8edf5;
+    --muted: #8a9bb8;
+    --accent: #6fa8ff;      /* soft blue, used sparingly */
+    --accent-ink: #0f1b2d;
+    --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
+    --sans: -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+
+  body {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.55;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 5rem;
+  }
+
+  /* Top bar: title on the left, filters on the right */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+  }
+  header h1 { font-family: var(--serif); font-size: 22px; font-weight: 400; margin: 0; color: var(--ink); }
+  header .filters { display: flex; gap: .75rem; }
+  select {
+    font: inherit; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 6px;
+    padding: 5px 10px; cursor: pointer;
+  }
+  select:hover { border-color: var(--muted); }
+  select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* The question sits in a single panel */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 12px;
+    padding: 2rem 2.25rem;
+  }
+  #question { min-height: 7rem; }
+  #question p:first-child { margin-top: 0; }
+  #question p:last-child  { margin-bottom: 0; }
+  .meta {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    font-family: var(--sans); font-size: 13px; color: var(--accent); margin-bottom: 1rem;
+  }
+
+  /* Timer: elapsed / target. Amber near the target, red past it. */
+  .timer { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .timer .target { opacity: .7; }
+  .timer.warn { color: #e6b450; }
+  .timer.over { color: #ff7a7a; }
+  .timer.done { color: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) {
+    .timer.over .elapsed { animation: pulse 1.6s ease-in-out infinite; }
+  }
+  @keyframes pulse { 50% { opacity: .45; } }
+  .empty { color: var(--muted); }
+  .empty code { font-size: 0.9em; color: var(--ink); }
+
+  /* Hint / solution unfold beneath the question */
+  .reveal { display: none; border-top: 1px solid var(--panel-edge); margin-top: 1.75rem; padding-top: 1.5rem; }
+  .reveal.open { display: block; }
+  .reveal .label { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-bottom: .5rem; }
+  .reveal p:last-child { margin-bottom: 0; }
+
+  /* Controls */
+  nav { margin-top: 1.5rem; display: flex; gap: .75rem; flex-wrap: wrap; font-family: var(--sans); font-size: 15px; }
+  button {
+    font: inherit; color: var(--ink);
+    background: none; border: 1px solid var(--panel-edge); border-radius: 6px;
+    padding: 8px 16px; cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { color: var(--muted); border-color: var(--panel-edge); cursor: default; opacity: .6; }
+  nav .next {
+    margin-left: auto;
+    background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  }
+  nav .next:hover { filter: brightness(1.08); }
+
+  footer { margin-top: 3rem; font-family: var(--sans); font-size: 13px; color: var(--muted); }
+  kbd { font: inherit; }
+
+  @media (max-width: 480px) {
+    body { font-size: 17px; padding-top: 2rem; }
+    .panel { padding: 1.5rem 1.25rem; }
+    nav .next { margin-left: 0; }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Quant practice</h1>
+  <div class="filters">
+    <select id="category" aria-label="Category"></select>
+    <select id="difficulty" aria-label="Difficulty">
+      <option value="">any difficulty</option>
+      <option value="1">easy</option>
+      <option value="2">medium</option>
+      <option value="3">hard</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+  <div id="question"></div>
+
+  <section id="hint" class="reveal">
+    <div class="label">Hint</div>
+    <div class="body"></div>
+  </section>
+
+  <section id="solution" class="reveal">
+    <div class="label">Solution</div>
+    <div class="body"></div>
+  </section>
+  </div>
+
+  <nav>
+    <button id="hint-btn">Show hint</button>
+    <button id="solution-btn">Show solution</button>
+    <button id="next-btn" class="next">Next question</button>
+  </nav>
+</main>
+
+<footer id="status"></footer>
+
+<!-- Question bank lives in questions.js — keep the two files in the same folder. -->
+<script src="questions.js"></script>
+
+<script>
+/* ============================================================================
+   APP — to add questions, edit questions.js, not this file.
+   ========================================================================== */
+
+const el = {
+  question:    document.getElementById("question"),
+  hint:        document.getElementById("hint"),
+  solution:    document.getElementById("solution"),
+  hintBtn:     document.getElementById("hint-btn"),
+  solutionBtn: document.getElementById("solution-btn"),
+  nextBtn:     document.getElementById("next-btn"),
+  category:    document.getElementById("category"),
+  difficulty:  document.getElementById("difficulty"),
+  status:      document.getElementById("status"),
+};
+
+// Questions already shown in this pass; cleared once every matching question
+// has been seen, so nothing repeats until the pool is exhausted.
+let seen = new Set();
+let current = null;
+
+const DIFFICULTY_NAMES = { 1: "easy", 2: "medium", 3: "hard" };
+
+// Timer state. Starts when a question is shown, stops when the solution is revealed.
+const WARN_AT = 0.8;   // turn amber at 80% of the target time
+let timerStart = null, timerInterval = null, timerStopped = false;
+
+function fmt(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+function renderTimer() {
+  const node = document.getElementById("timer");
+  if (!node || !current || timerStart === null) return;
+  const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+  const target = current.time;
+  node.innerHTML = `<span class="elapsed">${fmt(elapsed)}</span>` +
+    (target ? `<span class="target"> / ${fmt(target)}</span>` : "");
+  node.classList.remove("warn", "over");
+  if (target && !timerStopped) {
+    if (elapsed >= target) node.classList.add("over");
+    else if (elapsed >= target * WARN_AT) node.classList.add("warn");
+  }
+  if (target && elapsed >= target && !timerStopped) node.title = "Over the target time";
+}
+
+function startTimer() {
+  stopTimer();
+  timerStart = Date.now();
+  timerStopped = false;
+  const node = document.getElementById("timer");
+  if (node) node.classList.remove("done");
+  renderTimer();
+  timerInterval = setInterval(renderTimer, 250);
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  timerStopped = true;
+  const node = document.getElementById("timer");
+  if (node) { node.classList.remove("warn", "over"); node.classList.add("done"); }
+}
+
+function buildCategoryFilter() {
+  const cats = [...new Set(QUESTIONS.map(q => q.category))].sort();
+  el.category.innerHTML =
+    `<option value="">any category</option>` +
+    cats.map(c => `<option value="${c}">${c}</option>`).join("");
+}
+
+function pool() {
+  const cat = el.category.value;
+  const diff = el.difficulty.value;
+  return QUESTIONS.filter(q =>
+    (!cat  || q.category === cat) &&
+    (!diff || String(q.difficulty) === diff)
+  );
+}
+
+function renderMath(node) {
+  if (window.renderMathInElement) {
+    renderMathInElement(node, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$",  right: "$",  display: false },
+      ],
+      throwOnError: false,
+    });
+  }
+}
+
+function setReveal(section, html) {
+  section.querySelector(".body").innerHTML = html;
+  section.classList.remove("open");
+}
+
+function show(q) {
+  current = q;
+  el.question.innerHTML =
+    `<div class="meta">` +
+      `<span>${q.category}${q.difficulty ? " · " + (DIFFICULTY_NAMES[q.difficulty] || q.difficulty) : ""}</span>` +
+      `<span id="timer" class="timer"></span>` +
+    `</div>` +
+    `<div>${q.question}</div>`;
+  setReveal(el.hint, q.hint || "");
+  setReveal(el.solution, q.solution || "");
+  el.hintBtn.disabled = !q.hint;
+  el.solutionBtn.disabled = !q.solution;
+  el.hintBtn.textContent = "Show hint";
+  el.solutionBtn.textContent = "Show solution";
+  renderMath(el.question);
+  renderMath(el.hint);
+  renderMath(el.solution);
+  updateStatus();
+  startTimer();
+}
+
+function showEmpty(message) {
+  stopTimer();
+  current = null;
+  el.question.innerHTML = `<p class="empty">${message}</p>`;
+  setReveal(el.hint, "");
+  setReveal(el.solution, "");
+  el.hintBtn.disabled = el.solutionBtn.disabled = true;
+  updateStatus();
+}
+
+function next() {
+  const candidates = pool();
+  if (candidates.length === 0) {
+    showEmpty(QUESTIONS.length === 0
+      ? "No questions yet. Open this file in a text editor and add some to <code>QUESTIONS</code>."
+      : "No questions match these filters.");
+    return;
+  }
+  let unseen = candidates.filter(q => !seen.has(q.id));
+  if (unseen.length === 0) { seen.clear(); unseen = candidates; }
+  // Avoid showing the same question twice in a row when a fresh pass starts
+  if (unseen.length > 1 && current) unseen = unseen.filter(q => q.id !== current.id);
+  const q = unseen[Math.floor(Math.random() * unseen.length)];
+  seen.add(q.id);
+  show(q);
+}
+
+function toggle(section, btn, label) {
+  const open = section.classList.toggle("open");
+  btn.textContent = (open ? "Hide " : "Show ") + label;
+}
+
+function updateStatus() {
+  const n = pool().length;
+  const done = [...seen].filter(id => pool().some(q => q.id === id)).length;
+  el.status.textContent = n
+    ? `${done} of ${n} seen this pass.  The timer stops when you show the solution.  Keys: n next, h hint, s solution.`
+    : "";
+}
+
+el.nextBtn.addEventListener("click", next);
+el.hintBtn.addEventListener("click", () => toggle(el.hint, el.hintBtn, "hint"));
+el.solutionBtn.addEventListener("click", () => {
+  toggle(el.solution, el.solutionBtn, "solution");
+  if (el.solution.classList.contains("open")) stopTimer();   // revealing the answer ends the attempt
+});
+el.category.addEventListener("change", () => { seen.clear(); next(); });
+el.difficulty.addEventListener("change", () => { seen.clear(); next(); });
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "n") next();
+  if (e.key === "h" && !el.hintBtn.disabled) el.hintBtn.click();
+  if (e.key === "s" && !el.solutionBtn.disabled) el.solutionBtn.click();
+});
+
+buildCategoryFilter();
+next();
+</script>
+
+</body>
+</html>
