@@ -338,7 +338,9 @@ document.addEventListener("keydown", e => {
 });
 
 buildCategoryFilter();
-next();
+// KaTeX loads with `defer`, so it only runs after this inline script. Wait for
+// DOMContentLoaded (fired after deferred scripts) so the first question's maths renders.
+document.addEventListener("DOMContentLoaded", next);
 </script>
 
 </body>
