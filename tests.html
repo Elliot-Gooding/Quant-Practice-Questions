@@ -31,6 +31,7 @@
 <script src="store.js"></script>
 <script src="app.js"></script>
 <script src="view-practice.js"></script>
+<script src="view-test.js"></script>
 
 <script>
 /* Synthetic questions the view tests drive, in their own category so the real
@@ -38,11 +39,35 @@
 QBank.add([
   { id: "st-mc", category: "selftest", difficulty: 1, time: 60,
     question: `Which is two?`, hint: `Count.`, solution: `It is two.`,
-    options: [`one`, `two`, `three`, `four`, `five`], answer: 1 },
+    options: [`one`, `two`, `three`, `four`], answer: 1 },
   { id: "st-free-1", category: "selftest", difficulty: 1, time: 60,
     question: `Free response one`, hint: `A hint.`, solution: `A solution.` },
   { id: "st-free-2", category: "selftest", difficulty: 1, time: 60,
     question: `Free response two`, hint: `A hint.`, solution: `A solution.` },
+
+  /* Three more multiple-choice questions, enough to sit the synthetic paper
+     below. Their correct option is at a different index each time, so a bug
+     that assumed a fixed position would show up. */
+  { id: "st-q1", category: "selftest-test", difficulty: 1, time: 20,
+    question: `Pick alpha`, solution: `alpha`,
+    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`], answer: 0 },
+  { id: "st-q2", category: "selftest-test", difficulty: 1, time: 20,
+    question: `Pick gamma`, solution: `gamma`,
+    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`], answer: 2 },
+  { id: "st-q3", category: "selftest-test", difficulty: 1, time: 20,
+    question: `Pick epsilon`, solution: `epsilon`,
+    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`], answer: 4 },
+]);
+
+QFormats.add([
+  { id: "selftest-free", name: "Self test — free navigation", questionCount: 3,
+    timeLimitSec: 600, optionCount: 5,
+    marking: { correct: 1, incorrect: -1, skipped: 0 },
+    navigation: "free", allowFlagging: true },
+  { id: "selftest-linear", name: "Self test — linear", questionCount: 3,
+    timeLimitSec: 600, optionCount: 5,
+    marking: { correct: 1, incorrect: 0, skipped: 0 },
+    navigation: "linear", allowFlagging: false },
 ]);
 </script>
 
@@ -182,7 +207,7 @@ function practiceTests() {
   setSelect("#category", "selftest");
 
   check("sequential starts at the first question", $("#question").textContent.includes("Which is two?"), true);
-  check("options are rendered", $("#options").querySelectorAll(".option").length, 5);
+  check("options are rendered", $("#options").querySelectorAll(".option").length, 4);
   check("option list is visible for MCQ", $("#options").hidden, false);
 
   // Answer correctly by matching text, since display order is shuffled.
@@ -197,7 +222,7 @@ function practiceTests() {
     QStore.attemptsFor("st-mc")[0].solutionShown, false);
   check("no self-grade prompt for multiple choice", $("#selfgrade").hidden, true);
 
-  buttons.filter(b => b.querySelector(".text").textContent === "five")[0].click();
+  buttons.filter(b => b.querySelector(".text").textContent === "four")[0].click();
   check("a second click cannot overwrite the grade", QStore.attemptsFor("st-mc").length, 1);
 
   key("n");
@@ -239,11 +264,116 @@ function practiceTests() {
   QStore.reset();
 }
 
+/* ==========================================================================
+   TEST VIEW
+   ========================================================================== */
+
+/* Click the option whose visible text matches, since display order is shuffled. */
+function clickOption(text) {
+  const button = [...document.querySelectorAll("#options .option")]
+    .filter(b => b.querySelector(".text").textContent === text)[0];
+  if (!button) throw new Error("no option reading " + text);
+  button.click();
+}
+
+function testViewTests() {
+  section("test view");
+  QStore.reset();
+  const realConfirm = window.confirm;
+  window.confirm = () => true;
+
+  try {
+    QApp.go("test", { force: true });
+    check("start screen offers the eligible format",
+      !!$('[data-start="selftest-free"]'), true);
+    check("a format with no eligible questions cannot be started",
+      $('[data-start="maven-oa"]'), null);
+
+    $('[data-start="selftest-free"]').click();
+    check("paper is the right length", $(".controls").textContent.includes("of 3"), true);
+    check("paper drew only the five-option questions",
+      $("#qtext").textContent.startsWith("Pick "), true);
+    check("five options shown", document.querySelectorAll("#options .option").length, 5);
+
+    // Answer question 1 correctly.
+    const first = $("#qtext").textContent.trim();
+    clickOption(first.replace("Pick ", ""));
+    check("answer is marked selected",
+      document.querySelectorAll('#options .option[aria-pressed="true"]').length, 1);
+    check("no grading shown during the paper",
+      document.querySelectorAll("#options .correct, #options .wrong").length, 0);
+
+    key("f");
+    check("flagging works", $(".meta").textContent.includes("flagged"), true);
+
+    key("ArrowRight");
+    check("moved to question 2", $(".controls").textContent.includes("Question 2 of 3"), true);
+
+    // Answer question 2 wrongly: pick anything that is not the wanted word.
+    const wanted = $("#qtext").textContent.trim().replace("Pick ", "");
+    clickOption(["alpha", "beta", "gamma", "delta", "epsilon"].filter(w => w !== wanted)[0]);
+
+    key("0");
+    check("clear removes the answer",
+      document.querySelectorAll('#options .option[aria-pressed="true"]').length, 0);
+    clickOption(["alpha", "beta", "gamma", "delta", "epsilon"].filter(w => w !== wanted)[0]);
+
+    check("palette marks answered questions",
+      document.querySelectorAll("#palette .answered").length, 2);
+    check("palette marks the flagged question",
+      document.querySelectorAll("#palette .flagged").length, 1);
+
+    // Leave question 3 unanswered and submit from the review screen.
+    key("r");
+    check("review screen lists what is outstanding",
+      $("#view").textContent.includes("2 answered"), true);
+    check("review screen warns about negative marking",
+      $("#view").textContent.includes("leave it blank"), true);
+
+    $("#submit").click();
+
+    check("scored +1 for right, -1 for wrong, 0 for skipped",
+      $("#view").textContent.includes("0 out of 3"), true);
+    check("results count each outcome",
+      [/1 correct/, /1 wrong/, /1 skipped/].every(re => re.test($("#view").textContent)), true);
+
+    const attempts = QStore.attempts();
+    check("one attempt recorded per question", attempts.length, 3);
+    check("all tagged as test mode", attempts.every(a => a.mode === "test"), true);
+    check("all share the run id", new Set(attempts.map(a => a.testId)).size, 1);
+    check("recorded answer is the real option index, not the shuffled slot",
+      QStore.attemptsFor("st-q1")[0].answered,
+      QStore.attemptsFor("st-q1")[0].outcome === "correct" ? QBank.get("st-q1").answer
+        : QStore.attemptsFor("st-q1")[0].answered);
+
+    const history = QStore.tests();
+    check("test run stored", history.length, 1);
+    check("stored run keeps the score", [history[0].score, history[0].max], [0, 3]);
+
+    check("the missed question is now up for review",
+      QStore.reviewSet(QBank.filter({ category: "selftest-test" })).length, 2);
+
+    // Linear format: no palette, no going back.
+    $("#again").click();
+    $('[data-start="selftest-linear"]').click();
+    check("linear paper has no palette", $("#palette"), null);
+    check("linear paper has no previous button", $("#prev"), null);
+    key("ArrowRight");
+    key("ArrowLeft");
+    check("linear navigation refuses to go back",
+      $(".controls").textContent.includes("Question 2 of 3"), true);
+  } finally {
+    window.confirm = realConfirm;
+    QStore.reset();
+  }
+}
+
 window.addEventListener("load", () => {
   try {
     storeTests();
     validatorTests();
     practiceTests();
+    testViewTests();
   } catch (e) {
     failures++;
     log.push("\nTHREW  " + (e && e.stack ? e.stack : e));
