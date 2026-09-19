@@ -1,7 +1,7 @@
 /* ============================================================================
    QUESTION BANK
    ----------------------------------------------------------------------------
-   Add questions to the QUESTIONS array below. Each question is an object:
+   Add questions to the QBank.add([...]) call below. Each question is an object:
 
      {
        id: "unique-slug",            // required, any unique string
@@ -34,7 +34,7 @@
    (write \\frac, \\sqrt, etc.).
    ========================================================================== */
 
-const QUESTIONS = [
+QBank.add([
 
   {
     id: "marbles-first-red",
@@ -1786,4 +1786,4 @@ const QUESTIONS = [
     solution: `$$P = 1 \\cdot \\frac{3}{4} \\cdot \\frac{2}{4} = \\frac{3}{8}.$$`,
   },
 
-];
+]);

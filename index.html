@@ -158,12 +158,16 @@
 
 <footer id="status"></footer>
 
-<!-- Question bank lives in questions.js — keep the two files in the same folder. -->
-<script src="questions.js"></script>
+<!-- Registry first, then every bank file. ------------------------------------
+     TO ADD A BANK FILE: put it in questions/, have it call QBank.add([...]),
+     and add one <script> tag to the list below. That is the whole procedure. -->
+<script src="bank.js"></script>
+<script src="questions/questions.js"></script>
+<script src="questions/questions-maven.js"></script>
 
 <script>
 /* ============================================================================
-   APP — to add questions, edit questions.js, not this file.
+   APP — to add questions, edit a file in questions/, not this file.
    ========================================================================== */
 
 const el = {
@@ -228,7 +232,7 @@ function stopTimer() {
 }
 
 function buildCategoryFilter() {
-  const cats = [...new Set(QUESTIONS.map(q => q.category))].sort();
+  const cats = [...new Set(QBank.all().map(q => q.category))].sort();
   el.category.innerHTML =
     `<option value="">any category</option>` +
     cats.map(c => `<option value="${c}">${c}</option>`).join("");
@@ -237,7 +241,7 @@ function buildCategoryFilter() {
 function pool() {
   const cat = el.category.value;
   const diff = el.difficulty.value;
-  return QUESTIONS.filter(q =>
+  return QBank.all().filter(q =>
     (!cat  || q.category === cat) &&
     (!diff || String(q.difficulty) === diff)
   );
@@ -294,8 +298,8 @@ function showEmpty(message) {
 function next() {
   const candidates = pool();
   if (candidates.length === 0) {
-    showEmpty(QUESTIONS.length === 0
-      ? "No questions yet. Open this file in a text editor and add some to <code>QUESTIONS</code>."
+    showEmpty(QBank.size() === 0
+      ? "No questions yet. Add some to a file in <code>questions/</code>."
       : "No questions match these filters.");
     return;
   }
