@@ -14,7 +14,19 @@
                                      //   LaTeX: inline $x$, display $$x$$
        hint: `text`,                 // optional
        solution: `text`,             // optional
+
+       // Optional. Add these and the question becomes multiple choice and
+       // eligible for test mode; leave them off and it stays free-response,
+       // which is what most of this bank is.
+       options: [`a`, `b`, `c`, `d`, `e`],
+       answer: 2,                    // 0-based index into options
+
+       tags: ["bayes", "symmetry"],  // optional; finer-grained than category
+       source: "Maven OA",           // optional
      }
+
+   bank.js has the authoritative schema. `node validate.js` checks the whole
+   bank against it, and the Bank view in the app shows the same report.
 
    Use backticks (template strings) so you can write multi-line text and
    quotes freely. Example (delete the leading // on each line to try it):
