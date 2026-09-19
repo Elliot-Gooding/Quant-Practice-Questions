@@ -65,7 +65,23 @@ QBank.add([
     options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`, `zeta`], answer: 4 },
 ]);
 
+/* A separate pool for the paper-selection checks: five questions, seven
+   options, so it can never overlap the six-option pool above or anything real. */
+QBank.add([1, 2, 3, 4, 5].map(n => ({
+  id: "st-d" + n,
+  category: "selftest-draw",
+  difficulty: 1,
+  time: 20,
+  question: `Draw fixture ${n}`,
+  solution: `Fixture ${n}.`,
+  options: [`a`, `b`, `c`, `d`, `e`, `f`, `g`],
+  answer: 0,
+})));
+
 const WORDS = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"];
+const DRAW_ALL = ["st-d1", "st-d2", "st-d3", "st-d4", "st-d5"];
+const DRAW_SEEN = ["st-d1", "st-d2", "st-d3"];
+const DRAW_UNSEEN = ["st-d4", "st-d5"];
 
 QFormats.add([
   { id: "selftest-free", name: "Self test — free navigation", questionCount: 3,
@@ -76,6 +92,16 @@ QFormats.add([
     timeLimitSec: 600, optionCount: 6,
     marking: { correct: 1, incorrect: 0, skipped: 0 },
     navigation: "linear", allowFlagging: false },
+
+  { id: "selftest-draw", name: "Self test — draw", questionCount: 3,
+    timeLimitSec: 600, optionCount: 7,
+    marking: { correct: 1, incorrect: -1, skipped: 0 },
+    navigation: "free", allowFlagging: true },
+  { id: "selftest-draw-weighted", name: "Self test — draw, weighted", questionCount: 3,
+    timeLimitSec: 600, optionCount: 7,
+    marking: { correct: 1, incorrect: -1, skipped: 0 },
+    navigation: "free", allowFlagging: true,
+    categoryWeights: { "selftest-draw": 3 } },
 ]);
 </script>
 
@@ -414,12 +440,88 @@ function dashboardTests() {
   QStore.reset();
 }
 
+/* ==========================================================================
+   PAPER SELECTION
+   ========================================================================== */
+
+/* Sit a paper start to finish, answering nothing, and report which questions
+   it drew. The run's stored items are the only place the ids are exposed. */
+function sitPaper(formatId) {
+  QApp.go("test", { force: true });
+  const again = $("#again");
+  if (again) again.click();               // leave a results screen from last time
+  const start = $('[data-start="' + formatId + '"]');
+  if (!start) throw new Error("cannot start " + formatId);
+  start.click();
+  key("r");                               // free navigation: to the review screen
+  $("#submit").click();
+  const runs = QStore.tests();
+  return runs[runs.length - 1].items.map(i => i.qid);
+}
+
+function markSeen(ids) {
+  for (const id of ids)
+    QStore.recordAttempt({ qid: id, mode: "practice", outcome: "correct", timeMs: 1000 });
+}
+
+function drawTests() {
+  section("paper selection");
+  const realConfirm = window.confirm;
+  window.confirm = () => true;
+
+  try {
+    // Three of the five already attempted, two never seen. A three-question
+    // paper should take both unseen ones and exactly one of the rest.
+    QStore.reset();
+    markSeen(DRAW_SEEN);
+    let drawn = sitPaper("selftest-draw");
+
+    check("paper is the requested length", drawn.length, 3);
+    check("paper holds no duplicates", new Set(drawn).size, drawn.length);
+    check("every unseen question is used first",
+      DRAW_UNSEEN.every(id => drawn.includes(id)), true);
+    check("only as many seen questions as needed to fill up",
+      drawn.filter(id => DRAW_SEEN.includes(id)).length, 1);
+
+    // Same again with categoryWeights, which takes a different path.
+    QStore.reset();
+    markSeen(DRAW_SEEN);
+    drawn = sitPaper("selftest-draw-weighted");
+
+    check("weighted paper holds no duplicates", new Set(drawn).size, drawn.length);
+    check("weighted paper is the requested length", drawn.length, 3);
+    check("weighted paper prefers the unseen too",
+      DRAW_UNSEEN.every(id => drawn.includes(id)), true);
+
+    // Nothing left unseen: it must still fill a full paper, without repeats.
+    QStore.reset();
+    markSeen(DRAW_ALL);
+    drawn = sitPaper("selftest-draw");
+
+    check("a fully-seen bank still fills the paper", drawn.length, 3);
+    check("and still without duplicates", new Set(drawn).size, drawn.length);
+    check("drawing only from what is eligible",
+      drawn.every(id => DRAW_ALL.includes(id)), true);
+
+    // Sitting two papers back to back should move on to fresh questions.
+    QStore.reset();
+    const first = sitPaper("selftest-draw");
+    const second = sitPaper("selftest-draw");
+    check("a second paper uses the questions the first left alone",
+      second.filter(id => !first.includes(id)).length, 2);
+  } finally {
+    window.confirm = realConfirm;
+    QStore.reset();
+  }
+}
+
 window.addEventListener("load", () => {
   try {
     storeTests();
     validatorTests();
     practiceTests();
     testViewTests();
+    drawTests();
     dashboardTests();
   } catch (e) {
     failures++;

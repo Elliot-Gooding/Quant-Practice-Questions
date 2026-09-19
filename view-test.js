@@ -52,24 +52,55 @@ QApp.register((function () {
 
   /* ---- Building a paper ------------------------------------------------------ */
 
+  /* Draw a paper of `count` questions.
+
+     Questions never attempted before come first: a paper should be sat on fresh
+     material wherever there is any. Only once the unseen ones run out are the
+     remaining slots filled at random from questions already met. Nothing can
+     appear twice.
+
+     "Seen" means an attempt was recorded — answered, self-graded, or read the
+     solution to. Merely having had a question on screen does not count, which
+     matches what the store records everywhere else. */
   function drawPaper(fmt, count) {
     const pool = QBank.eligible(fmt);
+    const seenIds = QStore.attemptedIds();
+    const taken = new Set();
 
-    if (!fmt.categoryWeights)
-      return QApp.shuffle(pool).slice(0, count);
+    /* Up to `n` questions from `from`: unseen first, then seen, skipping
+       anything this paper already holds. */
+    function take(from, n) {
+      if (n <= 0) return [];
+      const unseen = [], seen = [];
+      for (const q of from) {
+        if (taken.has(q.id)) continue;
+        (seenIds.has(q.id) ? seen : unseen).push(q);
+      }
+      const chosen = QApp.shuffle(unseen).slice(0, n);
+      if (chosen.length < n)
+        chosen.push(...QApp.shuffle(seen).slice(0, n - chosen.length));
+      for (const q of chosen) taken.add(q.id);
+      return chosen;
+    }
 
     const picked = [];
-    for (const cat of Object.keys(fmt.categoryWeights)) {
-      const wanted = fmt.categoryWeights[cat];
-      picked.push(...QApp.shuffle(pool.filter(q => q.category === cat)).slice(0, wanted));
-    }
-    // A category that could not fill its quota is topped up from the rest,
-    // rather than handing back a short paper.
-    const have = new Set(picked.map(q => q.id));
-    const rest = QApp.shuffle(pool.filter(q => !have.has(q.id)));
-    while (picked.length < count && rest.length) picked.push(rest.shift());
 
-    return QApp.shuffle(picked).slice(0, count);
+    if (fmt.categoryWeights) {
+      for (const cat of Object.keys(fmt.categoryWeights)) {
+        // A shortened paper can ask for fewer questions than the weights sum
+        // to, so never draw past what is still wanted.
+        const room = count - picked.length;
+        if (room <= 0) break;
+        picked.push(...take(pool.filter(q => q.category === cat),
+                            Math.min(fmt.categoryWeights[cat], room)));
+      }
+    }
+
+    // Fill the rest: everything, with no weights, or whatever a category that
+    // could not meet its quota left short.
+    picked.push(...take(pool, count - picked.length));
+
+    return QApp.shuffle(picked);
   }
 
   function startRun(fmt, count, timeLimitSec) {
@@ -258,8 +289,12 @@ QApp.register((function () {
       return;
     }
 
+    const attempted = QStore.attemptedIds();
+
     const rows = formats.map(f => {
-      const eligible = QBank.eligible(f).length;
+      const pool = QBank.eligible(f);
+      const eligible = pool.length;
+      const fresh = pool.filter(q => !attempted.has(q.id)).length;
       const short = Math.max(0, f.questionCount - eligible);
       const m = f.marking;
       return `
@@ -273,7 +308,10 @@ QApp.register((function () {
           </p>
           ${f.note ? `<p class="subtle">${f.note}</p>` : ""}
           <p class="subtle">${eligible} of ${QBank.size()} questions in the bank are eligible${
-            short ? ` — <span class="warnc">${short} short of a full paper</span>` : ""}.</p>
+            short ? ` — <span class="warnc">${short} short of a full paper</span>` : ""}.${
+            eligible ? ` ${fresh === 0
+              ? "You have attempted all of them; this paper will repeat."
+              : fresh + " not attempted yet, and a paper takes those first."}` : ""}</p>
           <nav class="actions">
             ${eligible >= f.questionCount
               ? `<button class="primary" data-start="${f.id}">Start ${f.name.split(" — ")[0]}</button>`
