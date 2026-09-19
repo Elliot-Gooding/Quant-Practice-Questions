@@ -32,6 +32,8 @@
 <script src="app.js"></script>
 <script src="view-practice.js"></script>
 <script src="view-test.js"></script>
+<script src="view-stats.js"></script>
+<script src="view-bank.js"></script>
 
 <script>
 /* Synthetic questions the view tests drive, in their own category so the real
@@ -362,10 +364,48 @@ function testViewTests() {
     key("ArrowLeft");
     check("linear navigation refuses to go back",
       $(".controls").textContent.includes("Question 2 of 3"), true);
+
+    // Finish it, so the view is not left holding a running paper: switching
+    // tabs mid-test prompts to abandon, which would block the next check.
+    key("r");
+    check("linear paper submits", $("#view").textContent.includes("out of 3"), true);
+    check("no penalty format never scores below zero", QStore.tests()[1].score >= 0, true);
   } finally {
     window.confirm = realConfirm;
     QStore.reset();
   }
+}
+
+/* ==========================================================================
+   STATS AND BANK VIEWS
+   ========================================================================== */
+
+function dashboardTests() {
+  section("stats and bank views");
+  QStore.reset();
+
+  const q = QBank.get("st-q1");
+  QStore.recordAttempt({ qid: q.id, mode: "practice", outcome: "wrong", timeMs: 90000 });
+  QStore.recordAttempt({ qid: "st-q2", mode: "practice", outcome: "correct", timeMs: 5000 });
+
+  QApp.go("stats", { force: true });
+  const stats = $("#view").textContent;
+  check("stats reports bank coverage", /2 of \d+ questions attempted/.test(stats), true);
+  check("stats reports overall accuracy", stats.includes("50% accuracy overall"), true);
+  check("weakest table names the failed question", stats.includes("st-q1"), true);
+  check("slowest table flags the over-target question",
+    $("#view").textContent.includes("4.5×"), true);
+  check("export and reset are offered", [!!$("#export"), !!$("#reset")], [true, true]);
+
+  QApp.go("bank", { force: true });
+  const bank = $("#view").textContent;
+  check("bank view counts the multiple-choice questions", /with options/.test(bank), true);
+  check("bank view reports no errors on a valid bank", bank.includes("no errors"), true);
+  check("bank view lists every format", QFormats.all()
+    .every(f => bank.includes(f.name)), true);
+  check("bank view groups what still needs options", bank.includes("Still free-response only"), true);
+
+  QStore.reset();
 }
 
 window.addEventListener("load", () => {
@@ -374,6 +414,7 @@ window.addEventListener("load", () => {
     validatorTests();
     practiceTests();
     testViewTests();
+    dashboardTests();
   } catch (e) {
     failures++;
     log.push("\nTHREW  " + (e && e.stack ? e.stack : e));

@@ -219,9 +219,14 @@
   .detail .options { margin-top: .75rem; }
   .detail .reveal { display: block; }
 
+  /* Bank view: the id lists under each category */
+  .detail-ids { font-family: var(--sans); font-size: 12px; line-height: 2; word-break: break-word; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; color: var(--ink); }
+  td.barcell { width: 40%; min-width: 6rem; }
+
   /* Horizontal proportion bar, used for accuracy by category */
   .bar { display: block; height: 4px; border-radius: 2px; background: var(--panel-edge); margin-top: 4px; }
-  .bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+  .bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); min-width: 2px; }
 
   @media (max-width: 480px) {
     body { font-size: 17px; padding-top: 2rem; }
@@ -258,6 +263,8 @@
 <script src="app.js"></script>
 <script src="view-practice.js"></script>
 <script src="view-test.js"></script>
+<script src="view-stats.js"></script>
+<script src="view-bank.js"></script>
 
 <script>QApp.start();</script>
 
