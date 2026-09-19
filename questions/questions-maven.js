@@ -35,6 +35,15 @@ QBank.add([
       $$E = \\sum_{k=1}^{10}\\frac{1}{k} = H_{10} \\approx 2.93.$$
       <p>The trap is trying to model catch-up times. The whole problem is a statement about orderings.
       Note $H_n \\approx \\ln n + 0.577$, which is a useful estimate to carry.</p>`,
+    options: [
+      `$1$`,
+      `$2.30$`,
+      `$2.93$`,
+      `$5$`,
+      `$10$`,
+    ],
+    answer: 2,
+    tags: ["linearity", "indicators", "harmonic"],
   },
 
   {
@@ -51,6 +60,15 @@ QBank.add([
       $\\frac{1}{2}$. There are 8 interior and 2 end positions, so</p>
       $$E = 8\\cdot\\frac{1}{3} + 2\\cdot\\frac{1}{2} = \\frac{8}{3} + 1 = \\frac{11}{3} \\approx 3.67.$$
       <p>Indicators need not be independent for linearity to apply — that is the entire point of the technique.</p>`,
+    options: [
+      `$\\frac{8}{3} \\approx 2.67$`,
+      `$\\frac{10}{3} \\approx 3.33$`,
+      `$\\frac{11}{3} \\approx 3.67$`,
+      `$4$`,
+      `$5$`,
+    ],
+    answer: 2,
+    tags: ["linearity", "indicators"],
   },
 
   {
@@ -71,6 +89,15 @@ QBank.add([
       $j = 6,5,\\dots,1$, so</p>
       $$E = \\sum_{j=1}^{6}\\frac{1}{j} = \\frac{49}{20} = 2.45.$$
       <p>Same harmonic answer as the traffic clumps, for the same underlying reason.</p>`,
+    options: [
+      `$1$`,
+      `$2.45$`,
+      `$2.93$`,
+      `$3.5$`,
+      `$6$`,
+    ],
+    answer: 1,
+    tags: ["linearity", "permutations", "harmonic"],
   },
 
   {
@@ -86,6 +113,15 @@ QBank.add([
       <p>By linearity over the other 50 cards:</p>
       $$E = \\frac{50}{3} \\approx 16.7.$$
       <p>No need to think about positions, gaps, or the size of the deck beyond the count 50.</p>`,
+    options: [
+      `$8.3$`,
+      `$12.5$`,
+      `$16.7$`,
+      `$17.3$`,
+      `$25$`,
+    ],
+    answer: 2,
+    tags: ["linearity", "indicators", "symmetry"],
   },
 
   {
@@ -103,6 +139,15 @@ QBank.add([
       $$E = 1 + \\frac{6}{5} + \\frac{3}{2} = \\frac{37}{10} = 3.7.$$
       <p>This is the front end of the coupon collector. The full six-face answer is
       $6H_6 = 14.7$, worth memorising.</p>`,
+    options: [
+      `$3$`,
+      `$3.7$`,
+      `$4.5$`,
+      `$6$`,
+      `$14.7$`,
+    ],
+    answer: 1,
+    tags: ["geometric", "coupon-collector"],
   },
 
   {
@@ -143,6 +188,15 @@ QBank.add([
       <p>Substituting gives $E_1 = 7$, $E_2 = 9$, and</p>
       $$E_3 = 10.$$
       <p>The symmetry reduction from 8 states to 4 is what makes this doable without paper.</p>`,
+    options: [
+      `$3$`,
+      `$6$`,
+      `$8$`,
+      `$10$`,
+      `$12$`,
+    ],
+    answer: 3,
+    tags: ["markov-chain", "symmetry", "first-step"],
   },
 
   {
@@ -180,6 +234,15 @@ QBank.add([
       $$E[N] = \\sum_{n=0}^{\\infty}\\frac{1}{n!} = e \\approx 2.718.$$
       <p>One of the few places $e$ appears with no exponential in sight. If a multiple-choice option is
       $2.718$, it is almost certainly the answer.</p>`,
+    options: [
+      `$2$`,
+      `$2.5$`,
+      `$2.718$`,
+      `$3$`,
+      `$3.142$`,
+    ],
+    answer: 2,
+    tags: ["tail-sum", "continuous"],
   },
 
   {
@@ -196,6 +259,15 @@ QBank.add([
       $$E = 5\\left(\\frac{4}{5}\\right)^4 = \\frac{5 \\cdot 256}{625} = \\frac{256}{125} = 2.048.$$
       <p>The factor of 5 from the boxes cancels against one factor from the binomial — spotting that keeps
       the arithmetic to $4^4 = 256$ over $5^3 = 125$.</p>`,
+    options: [
+      `$0.41$`,
+      `$1$`,
+      `$2.048$`,
+      `$2.5$`,
+      `$4.096$`,
+    ],
+    answer: 2,
+    tags: ["linearity", "binomial"],
   },
 
   {
@@ -214,6 +286,15 @@ QBank.add([
       and more than $\\frac12$ apart). Total failure $= \\frac{3}{4}$, so</p>
       $$P = 1 - \\frac{3}{4} = \\frac{1}{4}.$$
       <p>Disjointness is what turns this from an area integral into three symmetric quarters.</p>`,
+    options: [
+      `$\\frac{1}{8}$`,
+      `$\\frac{1}{4}$`,
+      `$\\frac{1}{3}$`,
+      `$\\frac{1}{2}$`,
+      `$\\frac{3}{4}$`,
+    ],
+    answer: 1,
+    tags: ["geometric-probability", "complement"],
   },
 
   {
@@ -230,6 +311,15 @@ QBank.add([
       $2 \\cdot \\frac{1}{2}\\left(\\frac{3}{4}\\right)^2 = \\frac{9}{16}$.</p>
       $$P = 1 - \\frac{9}{16} = \\frac{7}{16} \\approx 0.44.$$
       <p>General form for a wait of $w$ in a window of 1: $P = 1 - (1-w)^2$.</p>`,
+    options: [
+      `$\\frac{1}{4}$`,
+      `$\\frac{7}{16}$`,
+      `$\\frac{1}{2}$`,
+      `$\\frac{9}{16}$`,
+      `$\\frac{15}{16}$`,
+    ],
+    answer: 1,
+    tags: ["geometric-probability", "complement"],
   },
 
   {
@@ -247,6 +337,15 @@ QBank.add([
       <p>Each has probability $\\left(\\frac{1}{2}\\right)^2 = \\frac14$, so</p>
       $$P = 3 \\cdot \\frac{1}{4} = \\frac{3}{4}.$$
       <p>For $n$ points the same argument gives $n/2^{n-1}$.</p>`,
+    options: [
+      `$\\frac{1}{4}$`,
+      `$\\frac{3}{8}$`,
+      `$\\frac{1}{2}$`,
+      `$\\frac{3}{4}$`,
+      `$1$`,
+    ],
+    answer: 3,
+    tags: ["symmetry", "disjoint-events"],
   },
 
   /* ============================ COMBINATORICS ============================= */
@@ -265,6 +364,15 @@ QBank.add([
       $$N = \\binom{8+3}{3} = \\binom{11}{3} = 165.$$
       <p>Checking that the upper constraint is inactive is the step most people skip — with a target of, say,
       20 instead of 9, inclusion–exclusion would be needed.</p>`,
+    options: [
+      `$120$`,
+      `$165$`,
+      `$210$`,
+      `$220$`,
+      `$286$`,
+    ],
+    answer: 1,
+    tags: ["stars-and-bars"],
   },
 
   {
@@ -282,6 +390,15 @@ QBank.add([
       $$f(10) = 144.$$
       <p>Equivalently $\\sum_k \\binom{11-k}{k}$. The same count answers "how many binary strings of length
       10 avoid 11".</p>`,
+    options: [
+      `$55$`,
+      `$89$`,
+      `$144$`,
+      `$233$`,
+      `$512$`,
+    ],
+    answer: 2,
+    tags: ["recursion", "fibonacci"],
   },
 
   {
@@ -331,6 +448,15 @@ QBank.add([
       <p>Three collisions, each merging two pairs into one value, so $21 - 3 = 18$ distinct products:</p>
       $$\\{1,2,3,4,5,6,8,9,10,12,15,16,18,20,24,25,30,36\\}.$$
       <p>Listing the products is slower and more error-prone than counting pairs and subtracting duplicates.</p>`,
+    options: [
+      `$15$`,
+      `$18$`,
+      `$20$`,
+      `$21$`,
+      `$36$`,
+    ],
+    answer: 1,
+    tags: ["counting", "collisions"],
   },
 
   {
@@ -346,6 +472,15 @@ QBank.add([
       $$N = \\sum_{k=1}^{8}(9-k)^2 = 1^2 + 2^2 + \\dots + 8^2 = \\frac{8 \\cdot 9 \\cdot 17}{6} = 204.$$
       <p>Worth having $\\sum k^2 = \\frac{n(n+1)(2n+1)}{6}$ automatic. (Rectangles, by contrast, are
       $\\binom{9}{2}^2 = 1296$.)</p>`,
+    options: [
+      `$64$`,
+      `$140$`,
+      `$204$`,
+      `$256$`,
+      `$1296$`,
+    ],
+    answer: 2,
+    tags: ["counting", "sums-of-squares"],
   },
 
   {
@@ -359,6 +494,15 @@ QBank.add([
     solution: `<p>Place one ball in each box, leaving 7 to distribute with no restriction. Stars and bars:</p>
       $$\\binom{7 + 2}{2} = \\binom{9}{2} = 36.$$
       <p>Equivalently, choose 2 of the 9 gaps between 10 lined-up balls.</p>`,
+    options: [
+      `$27$`,
+      `$36$`,
+      `$45$`,
+      `$66$`,
+      `$120$`,
+    ],
+    answer: 1,
+    tags: ["stars-and-bars"],
   },
 
   {
@@ -497,6 +641,15 @@ QBank.add([
       $$P(\\text{win by switching}) = \\frac{3}{8}.$$
       <p>Better than $\\frac14$, so switch — but not the $\\frac34$ that a careless "switching is always
       better" reflex suggests.</p>`,
+    options: [
+      `$\\frac{1}{4}$`,
+      `$\\frac{1}{3}$`,
+      `$\\frac{3}{8}$`,
+      `$\\frac{1}{2}$`,
+      `$\\frac{3}{4}$`,
+    ],
+    answer: 2,
+    tags: ["conditioning", "bayes"],
   },
 
   {
@@ -555,6 +708,15 @@ QBank.add([
       $$P = \\frac{9}{27} = \\frac{1}{3}.$$
       <p>Note this is not $\\frac12$: conditioning on "at least one" always favours the mixed cases, because
       there are two ways to be mixed.</p>`,
+    options: [
+      `$\\frac{1}{4}$`,
+      `$\\frac{1}{3}$`,
+      `$\\frac{1}{2}$`,
+      `$\\frac{2}{3}$`,
+      `$\\frac{3}{4}$`,
+    ],
+    answer: 1,
+    tags: ["conditioning", "complement"],
   },
 
   {

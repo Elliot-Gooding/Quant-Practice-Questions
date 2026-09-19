@@ -47,27 +47,33 @@ QBank.add([
   { id: "st-free-2", category: "selftest", difficulty: 1, time: 60,
     question: `Free response two`, hint: `A hint.`, solution: `A solution.` },
 
-  /* Three more multiple-choice questions, enough to sit the synthetic paper
+  /* Three more multiple-choice questions, enough to sit the synthetic papers
      below. Their correct option is at a different index each time, so a bug
-     that assumed a fixed position would show up. */
+     that assumed a fixed position would show up.
+
+     Six options, matched by a six-option format, because eligibility is by
+     option count alone: with five they would share a pool with the real Maven
+     questions and the paper would stop being deterministic. */
   { id: "st-q1", category: "selftest-test", difficulty: 1, time: 20,
     question: `Pick alpha`, solution: `alpha`,
-    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`], answer: 0 },
+    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`, `zeta`], answer: 0 },
   { id: "st-q2", category: "selftest-test", difficulty: 1, time: 20,
     question: `Pick gamma`, solution: `gamma`,
-    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`], answer: 2 },
+    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`, `zeta`], answer: 2 },
   { id: "st-q3", category: "selftest-test", difficulty: 1, time: 20,
     question: `Pick epsilon`, solution: `epsilon`,
-    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`], answer: 4 },
+    options: [`alpha`, `beta`, `gamma`, `delta`, `epsilon`, `zeta`], answer: 4 },
 ]);
+
+const WORDS = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"];
 
 QFormats.add([
   { id: "selftest-free", name: "Self test — free navigation", questionCount: 3,
-    timeLimitSec: 600, optionCount: 5,
+    timeLimitSec: 600, optionCount: 6,
     marking: { correct: 1, incorrect: -1, skipped: 0 },
     navigation: "free", allowFlagging: true },
   { id: "selftest-linear", name: "Self test — linear", questionCount: 3,
-    timeLimitSec: 600, optionCount: 5,
+    timeLimitSec: 600, optionCount: 6,
     marking: { correct: 1, incorrect: 0, skipped: 0 },
     navigation: "linear", allowFlagging: false },
 ]);
@@ -289,13 +295,13 @@ function testViewTests() {
     check("start screen offers the eligible format",
       !!$('[data-start="selftest-free"]'), true);
     check("a format with no eligible questions cannot be started",
-      $('[data-start="maven-oa"]'), null);
+      $('[data-start="optiver-style"]'), null);
 
     $('[data-start="selftest-free"]').click();
     check("paper is the right length", $(".controls").textContent.includes("of 3"), true);
     check("paper drew only the five-option questions",
       $("#qtext").textContent.startsWith("Pick "), true);
-    check("five options shown", document.querySelectorAll("#options .option").length, 5);
+    check("six options shown", document.querySelectorAll("#options .option").length, 6);
 
     // Answer question 1 correctly.
     const first = $("#qtext").textContent.trim();
@@ -313,12 +319,12 @@ function testViewTests() {
 
     // Answer question 2 wrongly: pick anything that is not the wanted word.
     const wanted = $("#qtext").textContent.trim().replace("Pick ", "");
-    clickOption(["alpha", "beta", "gamma", "delta", "epsilon"].filter(w => w !== wanted)[0]);
+    clickOption(WORDS.filter(w => w !== wanted)[0]);
 
     key("0");
     check("clear removes the answer",
       document.querySelectorAll('#options .option[aria-pressed="true"]').length, 0);
-    clickOption(["alpha", "beta", "gamma", "delta", "epsilon"].filter(w => w !== wanted)[0]);
+    clickOption(WORDS.filter(w => w !== wanted)[0]);
 
     check("palette marks answered questions",
       document.querySelectorAll("#palette .answered").length, 2);
