@@ -19,6 +19,9 @@
     --muted: #8a9bb8;
     --accent: #6fa8ff;      /* soft blue, used sparingly */
     --accent-ink: #0f1b2d;
+    --good: #6fd08c;
+    --bad: #ff7a7a;
+    --warn: #e6b450;
     --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
     --sans: -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
@@ -35,8 +38,10 @@
     margin: 0 auto;
     padding: 3.5rem 1.5rem 5rem;
   }
+  /* The dashboard and the test palette need more room than a column of prose. */
+  body.wide { max-width: 58rem; }
 
-  /* Top bar: title on the left, filters on the right */
+  /* Top bar: title on the left, view tabs on the right */
   header {
     display: flex;
     justify-content: space-between;
@@ -46,17 +51,34 @@
     font-family: var(--sans);
     font-size: 14px;
     color: var(--muted);
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
   header h1 { font-family: var(--serif); font-size: 22px; font-weight: 400; margin: 0; color: var(--ink); }
-  header .filters { display: flex; gap: .75rem; }
-  select {
+
+  .tabs { display: flex; gap: .25rem; }
+  .tabs a {
+    color: var(--muted); text-decoration: none;
+    padding: 5px 11px; border-radius: 6px; border: 1px solid transparent;
+  }
+  .tabs a:hover { color: var(--ink); border-color: var(--panel-edge); }
+  .tabs a[aria-current="page"] { color: var(--ink); background: var(--panel); border-color: var(--panel-edge); }
+  .tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Controls above the panel: mode and filters */
+  .controls {
+    display: flex; gap: .75rem; flex-wrap: wrap; align-items: center;
+    font-family: var(--sans); font-size: 14px; color: var(--muted);
+    margin-bottom: 1.25rem;
+  }
+  .controls .spacer { margin-left: auto; }
+
+  select, input[type="text"] {
     font: inherit; color: var(--ink);
     background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 6px;
     padding: 5px 10px; cursor: pointer;
   }
   select:hover { border-color: var(--muted); }
-  select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* The question sits in a single panel */
   .panel {
@@ -65,6 +87,7 @@
     border-radius: 12px;
     padding: 2rem 2.25rem;
   }
+  .panel + .panel { margin-top: 1rem; }
   #question { min-height: 7rem; }
   #question p:first-child { margin-top: 0; }
   #question p:last-child  { margin-bottom: 0; }
@@ -72,12 +95,13 @@
     display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
     font-family: var(--sans); font-size: 13px; color: var(--accent); margin-bottom: 1rem;
   }
+  .meta .tags { color: var(--muted); }
 
   /* Timer: elapsed / target. Amber near the target, red past it. */
   .timer { font-variant-numeric: tabular-nums; color: var(--muted); }
   .timer .target { opacity: .7; }
-  .timer.warn { color: #e6b450; }
-  .timer.over { color: #ff7a7a; }
+  .timer.warn { color: var(--warn); }
+  .timer.over { color: var(--bad); }
   .timer.done { color: var(--muted); }
   @media (prefers-reduced-motion: no-preference) {
     .timer.over .elapsed { animation: pulse 1.6s ease-in-out infinite; }
@@ -86,35 +110,116 @@
   .empty { color: var(--muted); }
   .empty code { font-size: 0.9em; color: var(--ink); }
 
+  /* Multiple-choice options */
+  .options { list-style: none; margin: 1.5rem 0 0; padding: 0; }
+  .options li { margin-top: .5rem; }
+  .option {
+    display: flex; gap: .75rem; align-items: baseline; width: 100%; text-align: left;
+    font-family: var(--serif); font-size: inherit; line-height: 1.5;
+    background: none; color: var(--ink);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    padding: .65rem .9rem; cursor: pointer;
+  }
+  .option:hover:not(:disabled) { border-color: var(--muted); }
+  .option .key {
+    font-family: var(--sans); font-size: 13px; color: var(--muted);
+    border: 1px solid var(--panel-edge); border-radius: 4px;
+    min-width: 1.6em; text-align: center; padding: 1px 0; flex: none;
+  }
+  .option[aria-pressed="true"] { border-color: var(--accent); }
+  .option[aria-pressed="true"] .key { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+  .option.correct { border-color: var(--good); }
+  .option.correct .key { background: var(--good); border-color: var(--good); color: var(--accent-ink); }
+  .option.wrong { border-color: var(--bad); }
+  .option.wrong .key { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); }
+  .option:disabled { cursor: default; opacity: 1; }
+  .option.muted:disabled { opacity: .55; }
+
   /* Hint / solution unfold beneath the question */
   .reveal { display: none; border-top: 1px solid var(--panel-edge); margin-top: 1.75rem; padding-top: 1.5rem; }
   .reveal.open { display: block; }
   .reveal .label { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-bottom: .5rem; }
   .reveal p:last-child { margin-bottom: 0; }
 
+  /* Self-grading, for free-response questions */
+  .selfgrade {
+    display: flex; gap: .75rem; align-items: baseline; flex-wrap: wrap;
+    font-family: var(--sans); font-size: 14px; color: var(--muted);
+    border-top: 1px solid var(--panel-edge); margin-top: 1.5rem; padding-top: 1.25rem;
+  }
+  .selfgrade .done { color: var(--muted); }
+  .selfgrade .done b { font-weight: 400; color: var(--ink); }
+
   /* Controls */
-  nav { margin-top: 1.5rem; display: flex; gap: .75rem; flex-wrap: wrap; font-family: var(--sans); font-size: 15px; }
+  nav.actions { margin-top: 1.5rem; display: flex; gap: .75rem; flex-wrap: wrap; font-family: var(--sans); font-size: 15px; }
   button {
-    font: inherit; color: var(--ink);
+    font: inherit; font-family: var(--sans); color: var(--ink);
     background: none; border: 1px solid var(--panel-edge); border-radius: 6px;
     padding: 8px 16px; cursor: pointer;
   }
-  button:hover { border-color: var(--muted); }
+  button:hover:not(:disabled) { border-color: var(--muted); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button:disabled { color: var(--muted); border-color: var(--panel-edge); cursor: default; opacity: .6; }
-  nav .next {
-    margin-left: auto;
-    background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
-  }
-  nav .next:hover { filter: brightness(1.08); }
+  .primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .danger { border-color: #5c2b2b; color: #ffb4b4; }
+  .danger:hover:not(:disabled) { border-color: var(--bad); }
+  nav.actions .right { margin-left: auto; }
 
   footer { margin-top: 3rem; font-family: var(--sans); font-size: 13px; color: var(--muted); }
-  kbd { font: inherit; }
+  kbd {
+    font-family: var(--sans); font-size: 12px;
+    border: 1px solid var(--panel-edge); border-radius: 4px; padding: 1px 5px;
+    color: var(--ink);
+  }
+
+  /* A line of notice above the content: no storage, no KaTeX, test in progress */
+  .banner {
+    font-family: var(--sans); font-size: 13px;
+    border: 1px solid var(--panel-edge); border-left: 3px solid var(--warn);
+    border-radius: 6px; padding: .6rem .9rem; margin-bottom: 1rem; color: var(--muted);
+  }
+  .banner b { color: var(--ink); font-weight: 400; }
+
+  /* Tables, used by the dashboard, the results screen and the bank view */
+  table { border-collapse: collapse; width: 100%; font-family: var(--sans); font-size: 14px; }
+  th, td { text-align: left; padding: .4rem .6rem .4rem 0; vertical-align: baseline; }
+  th { color: var(--muted); font-weight: 400; border-bottom: 1px solid var(--panel-edge); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr + tr td { border-top: 1px solid rgba(36,57,90,.5); }
+
+  h2 { font-family: var(--serif); font-weight: 400; font-size: 19px; margin: 2rem 0 .75rem; }
+  h2:first-child { margin-top: 0; }
+  .subtle { color: var(--muted); font-family: var(--sans); font-size: 13px; }
+
+  .good { color: var(--good); }
+  .bad  { color: var(--bad); }
+  .warnc { color: var(--warn); }
+
+  /* Question palette in test mode */
+  .palette { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
+  .palette button {
+    font-family: var(--sans); font-size: 13px; padding: 0;
+    width: 2.1rem; height: 2.1rem; border-radius: 6px; position: relative;
+  }
+  .palette button.answered { background: var(--panel-edge); color: var(--ink); }
+  .palette button.current { border-color: var(--accent); color: var(--accent); }
+  .palette button.flagged::after {
+    content: ""; position: absolute; top: 2px; right: 2px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--warn);
+  }
+  .legend { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-top: .75rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  /* Horizontal proportion bar, used for accuracy by category */
+  .bar { display: block; height: 4px; border-radius: 2px; background: var(--panel-edge); margin-top: 4px; }
+  .bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
 
   @media (max-width: 480px) {
     body { font-size: 17px; padding-top: 2rem; }
+    body.wide { max-width: none; }
     .panel { padding: 1.5rem 1.25rem; }
-    nav .next { margin-left: 0; }
+    nav.actions .right { margin-left: 0; }
+    header { margin-bottom: 1.25rem; }
   }
 </style>
 </head>
@@ -123,38 +228,10 @@
 
 <header>
   <h1>Quant practice</h1>
-  <div class="filters">
-    <select id="category" aria-label="Category"></select>
-    <select id="difficulty" aria-label="Difficulty">
-      <option value="">any difficulty</option>
-      <option value="1">easy</option>
-      <option value="2">medium</option>
-      <option value="3">hard</option>
-    </select>
-  </div>
+  <nav class="tabs" id="tabs"></nav>
 </header>
 
-<main>
-  <div class="panel">
-  <div id="question"></div>
-
-  <section id="hint" class="reveal">
-    <div class="label">Hint</div>
-    <div class="body"></div>
-  </section>
-
-  <section id="solution" class="reveal">
-    <div class="label">Solution</div>
-    <div class="body"></div>
-  </section>
-  </div>
-
-  <nav>
-    <button id="hint-btn">Show hint</button>
-    <button id="solution-btn">Show solution</button>
-    <button id="next-btn" class="next">Next question</button>
-  </nav>
-</main>
+<main id="view"></main>
 
 <footer id="status"></footer>
 
@@ -166,189 +243,13 @@
 <script src="formats.js"></script>
 <script src="questions/questions.js"></script>
 <script src="questions/questions-maven.js"></script>
+
+<!-- App. store.js and app.js before the views, which register themselves. -->
 <script src="store.js"></script>
+<script src="app.js"></script>
+<script src="view-practice.js"></script>
 
-<script>
-/* ============================================================================
-   APP — to add questions, edit a file in questions/, not this file.
-   ========================================================================== */
-
-const el = {
-  question:    document.getElementById("question"),
-  hint:        document.getElementById("hint"),
-  solution:    document.getElementById("solution"),
-  hintBtn:     document.getElementById("hint-btn"),
-  solutionBtn: document.getElementById("solution-btn"),
-  nextBtn:     document.getElementById("next-btn"),
-  category:    document.getElementById("category"),
-  difficulty:  document.getElementById("difficulty"),
-  status:      document.getElementById("status"),
-};
-
-// Questions already shown in this pass; cleared once every matching question
-// has been seen, so nothing repeats until the pool is exhausted.
-let seen = new Set();
-let current = null;
-
-const DIFFICULTY_NAMES = { 1: "easy", 2: "medium", 3: "hard" };
-
-// Timer state. Starts when a question is shown, stops when the solution is revealed.
-const WARN_AT = 0.8;   // turn amber at 80% of the target time
-let timerStart = null, timerInterval = null, timerStopped = false;
-
-function fmt(sec) {
-  const m = Math.floor(sec / 60), s = sec % 60;
-  return m + ":" + String(s).padStart(2, "0");
-}
-
-function renderTimer() {
-  const node = document.getElementById("timer");
-  if (!node || !current || timerStart === null) return;
-  const elapsed = Math.floor((Date.now() - timerStart) / 1000);
-  const target = current.time;
-  node.innerHTML = `<span class="elapsed">${fmt(elapsed)}</span>` +
-    (target ? `<span class="target"> / ${fmt(target)}</span>` : "");
-  node.classList.remove("warn", "over");
-  if (target && !timerStopped) {
-    if (elapsed >= target) node.classList.add("over");
-    else if (elapsed >= target * WARN_AT) node.classList.add("warn");
-  }
-  if (target && elapsed >= target && !timerStopped) node.title = "Over the target time";
-}
-
-function startTimer() {
-  stopTimer();
-  timerStart = Date.now();
-  timerStopped = false;
-  const node = document.getElementById("timer");
-  if (node) node.classList.remove("done");
-  renderTimer();
-  timerInterval = setInterval(renderTimer, 250);
-}
-
-function stopTimer() {
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = null;
-  timerStopped = true;
-  const node = document.getElementById("timer");
-  if (node) { node.classList.remove("warn", "over"); node.classList.add("done"); }
-}
-
-function buildCategoryFilter() {
-  const cats = [...new Set(QBank.all().map(q => q.category))].sort();
-  el.category.innerHTML =
-    `<option value="">any category</option>` +
-    cats.map(c => `<option value="${c}">${c}</option>`).join("");
-}
-
-function pool() {
-  const cat = el.category.value;
-  const diff = el.difficulty.value;
-  return QBank.all().filter(q =>
-    (!cat  || q.category === cat) &&
-    (!diff || String(q.difficulty) === diff)
-  );
-}
-
-function renderMath(node) {
-  if (window.renderMathInElement) {
-    renderMathInElement(node, {
-      delimiters: [
-        { left: "$$", right: "$$", display: true },
-        { left: "$",  right: "$",  display: false },
-      ],
-      throwOnError: false,
-    });
-  }
-}
-
-function setReveal(section, html) {
-  section.querySelector(".body").innerHTML = html;
-  section.classList.remove("open");
-}
-
-function show(q) {
-  current = q;
-  el.question.innerHTML =
-    `<div class="meta">` +
-      `<span>${q.category}${q.difficulty ? " · " + (DIFFICULTY_NAMES[q.difficulty] || q.difficulty) : ""}</span>` +
-      `<span id="timer" class="timer"></span>` +
-    `</div>` +
-    `<div>${q.question}</div>`;
-  setReveal(el.hint, q.hint || "");
-  setReveal(el.solution, q.solution || "");
-  el.hintBtn.disabled = !q.hint;
-  el.solutionBtn.disabled = !q.solution;
-  el.hintBtn.textContent = "Show hint";
-  el.solutionBtn.textContent = "Show solution";
-  renderMath(el.question);
-  renderMath(el.hint);
-  renderMath(el.solution);
-  updateStatus();
-  startTimer();
-}
-
-function showEmpty(message) {
-  stopTimer();
-  current = null;
-  el.question.innerHTML = `<p class="empty">${message}</p>`;
-  setReveal(el.hint, "");
-  setReveal(el.solution, "");
-  el.hintBtn.disabled = el.solutionBtn.disabled = true;
-  updateStatus();
-}
-
-function next() {
-  const candidates = pool();
-  if (candidates.length === 0) {
-    showEmpty(QBank.size() === 0
-      ? "No questions yet. Add some to a file in <code>questions/</code>."
-      : "No questions match these filters.");
-    return;
-  }
-  let unseen = candidates.filter(q => !seen.has(q.id));
-  if (unseen.length === 0) { seen.clear(); unseen = candidates; }
-  // Avoid showing the same question twice in a row when a fresh pass starts
-  if (unseen.length > 1 && current) unseen = unseen.filter(q => q.id !== current.id);
-  const q = unseen[Math.floor(Math.random() * unseen.length)];
-  seen.add(q.id);
-  show(q);
-}
-
-function toggle(section, btn, label) {
-  const open = section.classList.toggle("open");
-  btn.textContent = (open ? "Hide " : "Show ") + label;
-}
-
-function updateStatus() {
-  const n = pool().length;
-  const done = [...seen].filter(id => pool().some(q => q.id === id)).length;
-  el.status.textContent = n
-    ? `${done} of ${n} seen this pass.  The timer stops when you show the solution.  Keys: n next, h hint, s solution.`
-    : "";
-}
-
-el.nextBtn.addEventListener("click", next);
-el.hintBtn.addEventListener("click", () => toggle(el.hint, el.hintBtn, "hint"));
-el.solutionBtn.addEventListener("click", () => {
-  toggle(el.solution, el.solutionBtn, "solution");
-  if (el.solution.classList.contains("open")) stopTimer();   // revealing the answer ends the attempt
-});
-el.category.addEventListener("change", () => { seen.clear(); next(); });
-el.difficulty.addEventListener("change", () => { seen.clear(); next(); });
-
-document.addEventListener("keydown", e => {
-  if (e.target.tagName === "SELECT" || e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "n") next();
-  if (e.key === "h" && !el.hintBtn.disabled) el.hintBtn.click();
-  if (e.key === "s" && !el.solutionBtn.disabled) el.solutionBtn.click();
-});
-
-buildCategoryFilter();
-// KaTeX loads with `defer`, so it only runs after this inline script. Wait for
-// DOMContentLoaded (fired after deferred scripts) so the first question's maths renders.
-document.addEventListener("DOMContentLoaded", next);
-</script>
+<script>QApp.start();</script>
 
 </body>
 </html>
