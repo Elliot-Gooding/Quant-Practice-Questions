@@ -8,7 +8,7 @@
    If you find yourself doing long multiplication, you have missed the trick.
    The numbers are deliberately small. The thinking is not.
 
-   Registered with QBank.add([...]). Same object format as before:
+   Same object format as before:
      { id, category, difficulty (1-3), time (seconds), question, hint, solution }
    Backslashes must be doubled inside backticks (\\frac, \\binom, ...).
    ========================================================================== */
@@ -22,6 +22,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 150,
+    options: [
+      `$1.93$`,
+      `$2.50$`,
+      `$2.93$`,
+      `$3.33$`,
+      `$5.00$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Ten cars enter a single-lane road one after another, in a random order, each
       with its own constant preferred speed (all ten speeds distinct). A car that catches up to a
       slower car cannot overtake, so it joins that car's clump and travels at the slower speed.
@@ -35,15 +44,6 @@ QBank.add([
       $$E = \\sum_{k=1}^{10}\\frac{1}{k} = H_{10} \\approx 2.93.$$
       <p>The trap is trying to model catch-up times. The whole problem is a statement about orderings.
       Note $H_n \\approx \\ln n + 0.577$, which is a useful estimate to carry.</p>`,
-    options: [
-      `$1$`,
-      `$2.30$`,
-      `$2.93$`,
-      `$5$`,
-      `$10$`,
-    ],
-    answer: 2,
-    tags: ["linearity", "indicators", "harmonic"],
   },
 
   {
@@ -51,6 +51,15 @@ QBank.add([
     category: "expected value",
     difficulty: 2,
     time: 120,
+    options: [
+      `$3$`,
+      `$\\tfrac{10}{3}$`,
+      `$\\tfrac{11}{3}$`,
+      `$4$`,
+      `$5$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `The numbers $1$ through $10$ are arranged in a row in a uniformly random order. Call a
       position a <em>peak</em> if its number is larger than each of its immediate neighbours (the two end
       positions have only one neighbour). What is the expected number of peaks?`,
@@ -60,15 +69,6 @@ QBank.add([
       $\\frac{1}{2}$. There are 8 interior and 2 end positions, so</p>
       $$E = 8\\cdot\\frac{1}{3} + 2\\cdot\\frac{1}{2} = \\frac{8}{3} + 1 = \\frac{11}{3} \\approx 3.67.$$
       <p>Indicators need not be independent for linearity to apply — that is the entire point of the technique.</p>`,
-    options: [
-      `$\\frac{8}{3} \\approx 2.67$`,
-      `$\\frac{10}{3} \\approx 3.33$`,
-      `$\\frac{11}{3} \\approx 3.67$`,
-      `$4$`,
-      `$5$`,
-    ],
-    answer: 2,
-    tags: ["linearity", "indicators"],
   },
 
   {
@@ -76,6 +76,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 180,
+    options: [
+      `$1$`,
+      `$1.5$`,
+      `$2.45$`,
+      `$3$`,
+      `$6$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Six people each write their name on a card; the cards are shuffled and dealt back one per
       person. Draw an arrow from each person to the owner of the card they received. This decomposes the
       group into cycles (a person holding their own card is a cycle of length 1). What is the expected
@@ -89,15 +98,6 @@ QBank.add([
       $j = 6,5,\\dots,1$, so</p>
       $$E = \\sum_{j=1}^{6}\\frac{1}{j} = \\frac{49}{20} = 2.45.$$
       <p>Same harmonic answer as the traffic clumps, for the same underlying reason.</p>`,
-    options: [
-      `$1$`,
-      `$2.45$`,
-      `$2.93$`,
-      `$3.5$`,
-      `$6$`,
-    ],
-    answer: 1,
-    tags: ["linearity", "permutations", "harmonic"],
   },
 
   {
@@ -105,6 +105,15 @@ QBank.add([
     category: "expected value",
     difficulty: 2,
     time: 120,
+    options: [
+      `$12.5$`,
+      `$\\tfrac{50}{3}\\approx 16.7$`,
+      `$\\tfrac{52}{3}\\approx 17.3$`,
+      `$25$`,
+      `$26$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `A standard deck is shuffled. What is the expected number of cards strictly between the
       ace of hearts and the ace of diamonds?`,
     hint: `Pick any one of the other 50 cards. What is the chance it lands between the two red aces?`,
@@ -113,15 +122,6 @@ QBank.add([
       <p>By linearity over the other 50 cards:</p>
       $$E = \\frac{50}{3} \\approx 16.7.$$
       <p>No need to think about positions, gaps, or the size of the deck beyond the count 50.</p>`,
-    options: [
-      `$8.3$`,
-      `$12.5$`,
-      `$16.7$`,
-      `$17.3$`,
-      `$25$`,
-    ],
-    answer: 2,
-    tags: ["linearity", "indicators", "symmetry"],
   },
 
   {
@@ -129,6 +129,15 @@ QBank.add([
     category: "expected value",
     difficulty: 2,
     time: 110,
+    options: [
+      `$3$`,
+      `$3.5$`,
+      `$3.7$`,
+      `$4.2$`,
+      `$14.7$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `You roll a fair die repeatedly. What is the expected number of rolls needed until you have
       seen three <em>different</em> faces?`,
     hint: `Break the wait into stages: the wait for a new face is geometric, and its success probability
@@ -139,15 +148,6 @@ QBank.add([
       $$E = 1 + \\frac{6}{5} + \\frac{3}{2} = \\frac{37}{10} = 3.7.$$
       <p>This is the front end of the coupon collector. The full six-face answer is
       $6H_6 = 14.7$, worth memorising.</p>`,
-    options: [
-      `$3$`,
-      `$3.7$`,
-      `$4.5$`,
-      `$6$`,
-      `$14.7$`,
-    ],
-    answer: 1,
-    tags: ["geometric", "coupon-collector"],
   },
 
   {
@@ -155,6 +155,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 150,
+    options: [
+      `$\\tfrac{1}{90}$`,
+      `$\\tfrac{1}{10}$`,
+      `$\\tfrac{1}{9}$`,
+      `$\\tfrac{9}{100}$`,
+      `$1$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `Ten people numbered $1$ to $10$ throw their hats into a pile and each takes one at random.
       What is the expected number of indices $i$ (from 1 to 9) such that person $i$ <em>and</em> person
       $i+1$ both get their own hat back?`,
@@ -174,6 +183,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 180,
+    options: [
+      `$3$`,
+      `$6$`,
+      `$7$`,
+      `$10$`,
+      `$12$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `An ant starts at one corner of a cube and at each step walks along a randomly chosen one of
       the three edges at its current corner. What is the expected number of steps to reach the diagonally
       opposite corner?`,
@@ -188,15 +206,6 @@ QBank.add([
       <p>Substituting gives $E_1 = 7$, $E_2 = 9$, and</p>
       $$E_3 = 10.$$
       <p>The symmetry reduction from 8 states to 4 is what makes this doable without paper.</p>`,
-    options: [
-      `$3$`,
-      `$6$`,
-      `$8$`,
-      `$10$`,
-      `$12$`,
-    ],
-    answer: 3,
-    tags: ["markov-chain", "symmetry", "first-step"],
   },
 
   {
@@ -204,6 +213,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 180,
+    options: [
+      `Equal, both $8$`,
+      `Equal, both $14$`,
+      `HHH is larger by $2$`,
+      `HHH is larger by $4$`,
+      `HTH is larger by $4$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `A fair coin is flipped repeatedly. Let $A$ be the expected number of flips until the pattern
       HHH first appears, and $B$ the expected number until HTH first appears. Which is larger, and by how much?`,
     hint: `Ask what happens after a near-miss. How much of your progress survives a failure in each case?`,
@@ -224,6 +242,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 150,
+    options: [
+      `$2$`,
+      `$2.5$`,
+      `$e \\approx 2.718$`,
+      `$3$`,
+      `$\\pi \\approx 3.14$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `You draw numbers independently and uniformly from $[0,1]$, adding them up, and stop as soon
       as the running total exceeds 1. What is the expected number of draws?`,
     hint: `$P(\\text{more than } n \\text{ draws needed})$ is the probability that $n$ uniforms sum to
@@ -234,15 +261,6 @@ QBank.add([
       $$E[N] = \\sum_{n=0}^{\\infty}\\frac{1}{n!} = e \\approx 2.718.$$
       <p>One of the few places $e$ appears with no exponential in sight. If a multiple-choice option is
       $2.718$, it is almost certainly the answer.</p>`,
-    options: [
-      `$2$`,
-      `$2.5$`,
-      `$2.718$`,
-      `$3$`,
-      `$3.142$`,
-    ],
-    answer: 2,
-    tags: ["tail-sum", "continuous"],
   },
 
   {
@@ -250,6 +268,15 @@ QBank.add([
     category: "expected value",
     difficulty: 2,
     time: 120,
+    options: [
+      `$1$`,
+      `$1.64$`,
+      `$2.048$`,
+      `$2.5$`,
+      `$5$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Five balls are thrown independently into five boxes, each ball landing in a uniformly random
       box. What is the expected number of boxes containing exactly one ball?`,
     hint: `Fix a box. The count of balls in it is binomial — you only need one term.`,
@@ -259,15 +286,6 @@ QBank.add([
       $$E = 5\\left(\\frac{4}{5}\\right)^4 = \\frac{5 \\cdot 256}{625} = \\frac{256}{125} = 2.048.$$
       <p>The factor of 5 from the boxes cancels against one factor from the binomial — spotting that keeps
       the arithmetic to $4^4 = 256$ over $5^3 = 125$.</p>`,
-    options: [
-      `$0.41$`,
-      `$1$`,
-      `$2.048$`,
-      `$2.5$`,
-      `$4.096$`,
-    ],
-    answer: 2,
-    tags: ["linearity", "binomial"],
   },
 
   {
@@ -275,6 +293,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 150,
+    options: [
+      `$\\tfrac{1}{8}$`,
+      `$\\tfrac{1}{6}$`,
+      `$\\tfrac{1}{4}$`,
+      `$\\tfrac{1}{3}$`,
+      `$\\tfrac{1}{2}$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `A stick of length 1 is broken at two independent uniformly random points. What is the
       probability the three resulting pieces can form a triangle?`,
     hint: `The triangle fails exactly when one piece exceeds $\\frac{1}{2}$. Can two pieces both exceed a half?`,
@@ -286,15 +313,6 @@ QBank.add([
       and more than $\\frac12$ apart). Total failure $= \\frac{3}{4}$, so</p>
       $$P = 1 - \\frac{3}{4} = \\frac{1}{4}.$$
       <p>Disjointness is what turns this from an area integral into three symmetric quarters.</p>`,
-    options: [
-      `$\\frac{1}{8}$`,
-      `$\\frac{1}{4}$`,
-      `$\\frac{1}{3}$`,
-      `$\\frac{1}{2}$`,
-      `$\\frac{3}{4}$`,
-    ],
-    answer: 1,
-    tags: ["geometric-probability", "complement"],
   },
 
   {
@@ -302,6 +320,15 @@ QBank.add([
     category: "expected value",
     difficulty: 2,
     time: 130,
+    options: [
+      `$\\tfrac{1}{4}$`,
+      `$\\tfrac{7}{16}$`,
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{9}{16}$`,
+      `$\\tfrac{15}{16}$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `Two traders each arrive at a bar at an independent uniformly random time between 6pm and 7pm.
       Each waits exactly 15 minutes for the other and then leaves. What is the probability they meet?`,
     hint: `Draw the unit square of arrival times. The meeting region is a band around the diagonal — so
@@ -311,15 +338,6 @@ QBank.add([
       $2 \\cdot \\frac{1}{2}\\left(\\frac{3}{4}\\right)^2 = \\frac{9}{16}$.</p>
       $$P = 1 - \\frac{9}{16} = \\frac{7}{16} \\approx 0.44.$$
       <p>General form for a wait of $w$ in a window of 1: $P = 1 - (1-w)^2$.</p>`,
-    options: [
-      `$\\frac{1}{4}$`,
-      `$\\frac{7}{16}$`,
-      `$\\frac{1}{2}$`,
-      `$\\frac{9}{16}$`,
-      `$\\frac{15}{16}$`,
-    ],
-    answer: 1,
-    tags: ["geometric-probability", "complement"],
   },
 
   {
@@ -327,6 +345,15 @@ QBank.add([
     category: "expected value",
     difficulty: 3,
     time: 150,
+    options: [
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{5}{8}$`,
+      `$\\tfrac{3}{4}$`,
+      `$\\tfrac{7}{8}$`,
+      `$1$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Three points are chosen independently and uniformly on the circumference of a circle. What is
       the probability that all three lie within some common semicircle?`,
     hint: `For each point, consider the event that the other two both lie in the semicircle starting at it
@@ -337,15 +364,6 @@ QBank.add([
       <p>Each has probability $\\left(\\frac{1}{2}\\right)^2 = \\frac14$, so</p>
       $$P = 3 \\cdot \\frac{1}{4} = \\frac{3}{4}.$$
       <p>For $n$ points the same argument gives $n/2^{n-1}$.</p>`,
-    options: [
-      `$\\frac{1}{4}$`,
-      `$\\frac{3}{8}$`,
-      `$\\frac{1}{2}$`,
-      `$\\frac{3}{4}$`,
-      `$1$`,
-    ],
-    answer: 3,
-    tags: ["symmetry", "disjoint-events"],
   },
 
   /* ============================ COMBINATORICS ============================= */
@@ -355,6 +373,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 120,
+    options: [
+      `$120$`,
+      `$165$`,
+      `$220$`,
+      `$286$`,
+      `$715$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `How many four-digit numbers (1000 to 9999) have digits summing to exactly 9?`,
     hint: `Stars and bars — but the leading digit must be at least 1, and you should check whether the
       "no digit above 9" constraint can even bite.`,
@@ -364,15 +391,6 @@ QBank.add([
       $$N = \\binom{8+3}{3} = \\binom{11}{3} = 165.$$
       <p>Checking that the upper constraint is inactive is the step most people skip — with a target of, say,
       20 instead of 9, inclusion–exclusion would be needed.</p>`,
-    options: [
-      `$120$`,
-      `$165$`,
-      `$210$`,
-      `$220$`,
-      `$286$`,
-    ],
-    answer: 1,
-    tags: ["stars-and-bars"],
   },
 
   {
@@ -380,6 +398,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 3,
     time: 150,
+    options: [
+      `$55$`,
+      `$89$`,
+      `$144$`,
+      `$233$`,
+      `$512$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `How many subsets of $\\{1, 2, \\dots, 10\\}$ contain no two consecutive integers? (Count the
       empty set.)`,
     hint: `Let $f(n)$ be the answer for $\\{1,\\dots,n\\}$ and condition on whether $n$ is in the subset.`,
@@ -390,15 +417,6 @@ QBank.add([
       $$f(10) = 144.$$
       <p>Equivalently $\\sum_k \\binom{11-k}{k}$. The same count answers "how many binary strings of length
       10 avoid 11".</p>`,
-    options: [
-      `$55$`,
-      `$89$`,
-      `$144$`,
-      `$233$`,
-      `$512$`,
-    ],
-    answer: 2,
-    tags: ["recursion", "fibonacci"],
   },
 
   {
@@ -406,6 +424,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 130,
+    options: [
+      `$0.00252$`,
+      `$0.0084$`,
+      `$0.02002$`,
+      `$0.0417$`,
+      `$0.12$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Five digits are chosen independently and uniformly from $0$–$9$ and written in a row. What is
       the probability they come out in non-decreasing order?`,
     hint: `A non-decreasing sequence is determined by how many of each digit you use — a multiset, not an
@@ -423,6 +450,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 120,
+    options: [
+      `$2$`,
+      `$3$`,
+      `$4$`,
+      `$6$`,
+      `$12$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `How many triangles are there with integer side lengths and perimeter exactly 12? (Congruent
       triangles count once.)`,
     hint: `Order the sides $a \\le b \\le c$. The triangle inequality plus the perimeter forces $c$ into a
@@ -440,6 +476,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 120,
+    options: [
+      `$15$`,
+      `$18$`,
+      `$21$`,
+      `$24$`,
+      `$36$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `Two fair six-sided dice are rolled and the two numbers multiplied. How many distinct values
       can the product take?`,
     hint: `Count all 21 unordered pairs, then find the collisions — there are fewer than you would guess.`,
@@ -448,15 +493,6 @@ QBank.add([
       <p>Three collisions, each merging two pairs into one value, so $21 - 3 = 18$ distinct products:</p>
       $$\\{1,2,3,4,5,6,8,9,10,12,15,16,18,20,24,25,30,36\\}.$$
       <p>Listing the products is slower and more error-prone than counting pairs and subtracting duplicates.</p>`,
-    options: [
-      `$15$`,
-      `$18$`,
-      `$20$`,
-      `$21$`,
-      `$36$`,
-    ],
-    answer: 1,
-    tags: ["counting", "collisions"],
   },
 
   {
@@ -464,6 +500,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 110,
+    options: [
+      `$64$`,
+      `$100$`,
+      `$204$`,
+      `$296$`,
+      `$1296$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `How many squares of any size are there on a standard $8 \\times 8$ chessboard? (Squares must
       align with the grid.)`,
     hint: `A $k \\times k$ square is determined by the position of its top-left corner.`,
@@ -472,15 +517,6 @@ QBank.add([
       $$N = \\sum_{k=1}^{8}(9-k)^2 = 1^2 + 2^2 + \\dots + 8^2 = \\frac{8 \\cdot 9 \\cdot 17}{6} = 204.$$
       <p>Worth having $\\sum k^2 = \\frac{n(n+1)(2n+1)}{6}$ automatic. (Rectangles, by contrast, are
       $\\binom{9}{2}^2 = 1296$.)</p>`,
-    options: [
-      `$64$`,
-      `$140$`,
-      `$204$`,
-      `$256$`,
-      `$1296$`,
-    ],
-    answer: 2,
-    tags: ["counting", "sums-of-squares"],
   },
 
   {
@@ -488,12 +524,6 @@ QBank.add([
     category: "combinatorics",
     difficulty: 1,
     time: 90,
-    question: `In how many ways can 10 identical balls be placed into 3 distinguishable boxes so that no box
-      is empty?`,
-    hint: `Put one ball in each box first, then distribute what is left freely.`,
-    solution: `<p>Place one ball in each box, leaving 7 to distribute with no restriction. Stars and bars:</p>
-      $$\\binom{7 + 2}{2} = \\binom{9}{2} = 36.$$
-      <p>Equivalently, choose 2 of the 9 gaps between 10 lined-up balls.</p>`,
     options: [
       `$27$`,
       `$36$`,
@@ -502,7 +532,13 @@ QBank.add([
       `$120$`,
     ],
     answer: 1,
-    tags: ["stars-and-bars"],
+    source: "Maven OA",
+    question: `In how many ways can 10 identical balls be placed into 3 distinguishable boxes so that no box
+      is empty?`,
+    hint: `Put one ball in each box first, then distribute what is left freely.`,
+    solution: `<p>Place one ball in each box, leaving 7 to distribute with no restriction. Stars and bars:</p>
+      $$\\binom{7 + 2}{2} = \\binom{9}{2} = 36.$$
+      <p>Equivalently, choose 2 of the 9 gaps between 10 lined-up balls.</p>`,
   },
 
   {
@@ -510,6 +546,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 3,
     time: 150,
+    options: [
+      `Equal, both $\\tfrac{25}{216}$`,
+      `$9$, by $\\tfrac{27}{216}$ to $\\tfrac{25}{216}$`,
+      `$9$, by $\\tfrac{26}{216}$ to $\\tfrac{25}{216}$`,
+      `$10$, by $\\tfrac{27}{216}$ to $\\tfrac{25}{216}$`,
+      `$10$, by $\\tfrac{30}{216}$ to $\\tfrac{25}{216}$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `Three fair dice are rolled. Both 9 and 10 can be written as a sum of three values from 1–6 in
       exactly six different ways (as unordered collections). Yet one total is strictly more likely. Which,
       and what are the two probabilities?`,
@@ -528,6 +573,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 130,
+    options: [
+      `$12$`,
+      `$16$`,
+      `$22$`,
+      `$32$`,
+      `$64$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `What is the maximum number of pieces a circular pizza can be divided into using 6 straight
       cuts? (Pieces need not be equal and you may not move pieces between cuts.)`,
     hint: `Each new cut adds one piece for every existing cut it crosses, plus one.`,
@@ -544,6 +598,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 3,
     time: 140,
+    options: [
+      `$\\tfrac{1}{10}$`,
+      `$\\tfrac{1}{6}$`,
+      `$\\tfrac{1}{5}$`,
+      `$\\tfrac{1}{4}$`,
+      `$\\tfrac{1}{3}$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `A divisor of 720 is chosen uniformly at random. What is the probability it is a perfect square?`,
     hint: `Factorise, then note that a divisor is a square exactly when every exponent in it is even.`,
     solution: `<p>$720 = 2^4 \\cdot 3^2 \\cdot 5$. A divisor is $2^a 3^b 5^c$ with $a \\le 4, b \\le 2, c \\le 1$,
@@ -557,6 +620,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 120,
+    options: [
+      `$0.267$`,
+      `$0.401$`,
+      `$0.467$`,
+      `$0.533$`,
+      `$0.600$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `An integer is chosen uniformly from 1 to 1000. What is the probability it is divisible by 3 or
       by 5, but <em>not</em> by 15?`,
     hint: `Inclusion–exclusion gives "3 or 5". Then remove the multiples of 15 — but notice they were already
@@ -573,6 +645,15 @@ QBank.add([
     category: "combinatorics",
     difficulty: 2,
     time: 120,
+    options: [
+      `$\\tfrac{55}{256}$`,
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{201}{256}$`,
+      `$\\tfrac{7}{8}$`,
+      `$\\tfrac{247}{256}$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `A random 8-bit string is generated with each bit independently 0 or 1 with probability
       $\\frac12$. What is the probability it contains at least one occurrence of two consecutive 1s?`,
     hint: `Count the complement with the same recursion as the non-adjacent subsets problem.`,
@@ -590,6 +671,15 @@ QBank.add([
     category: "conditional",
     difficulty: 3,
     time: 200,
+    options: [
+      `$\\tfrac{1}{3}$`,
+      `$\\tfrac{13}{27}$`,
+      `$\\tfrac{14}{27}$`,
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{7}{13}$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `A family has two children. You are told that at least one of them is a boy born on a Tuesday.
       Assuming boys and girls are equally likely and birth days are uniform and independent, what is the
       probability both children are boys?`,
@@ -611,6 +701,15 @@ QBank.add([
     category: "conditional",
     difficulty: 3,
     time: 180,
+    options: [
+      `$1$`,
+      `$\\tfrac{3}{2}$`,
+      `$2$`,
+      `$3$`,
+      `$6$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `You roll a fair die repeatedly until you get a 6. You are then told that every roll in the
       sequence was an even number. What is the expected number of rolls?`,
     hint: `Do not assume the rolls become uniform on $\\{2,4,6\\}$ with the same stopping rule — the
@@ -630,6 +729,15 @@ QBank.add([
     category: "conditional",
     difficulty: 2,
     time: 140,
+    options: [
+      `$\\tfrac{1}{4}$`,
+      `$\\tfrac{1}{3}$`,
+      `$\\tfrac{3}{8}$`,
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{3}{4}$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `There are four doors, one hiding a prize. You pick a door. The host, who knows where the prize
       is, opens one of the other three doors to reveal no prize. You may now switch to either of the two
       remaining unopened doors. If you switch, what is your probability of winning?`,
@@ -641,15 +749,6 @@ QBank.add([
       $$P(\\text{win by switching}) = \\frac{3}{8}.$$
       <p>Better than $\\frac14$, so switch — but not the $\\frac34$ that a careless "switching is always
       better" reflex suggests.</p>`,
-    options: [
-      `$\\frac{1}{4}$`,
-      `$\\frac{1}{3}$`,
-      `$\\frac{3}{8}$`,
-      `$\\frac{1}{2}$`,
-      `$\\frac{3}{4}$`,
-    ],
-    answer: 2,
-    tags: ["conditioning", "bayes"],
   },
 
   {
@@ -657,6 +756,15 @@ QBank.add([
     category: "conditional",
     difficulty: 3,
     time: 170,
+    options: [
+      `$\\tfrac{1}{n}$`,
+      `$\\tfrac{2}{n}$`,
+      `$\\tfrac{1}{3}$`,
+      `$\\tfrac{1}{2}$`,
+      `It depends on $n$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `A uniformly random permutation of $\\{1, 2, \\dots, n\\}$ is written in cycle form. What is the
       probability that 1 and 2 lie in the same cycle? (Your answer should be a number, valid for every
       $n \\ge 2$.)`,
@@ -677,6 +785,15 @@ QBank.add([
     category: "conditional",
     difficulty: 3,
     time: 200,
+    options: [
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{2}{3}$`,
+      `$\\tfrac{3}{4}$`,
+      `$\\tfrac{98}{99}$`,
+      `$\\tfrac{99}{100}$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `100 passengers board a full 100-seat plane. The first passenger has lost their boarding pass
       and sits in a uniformly random seat. Every subsequent passenger takes their own seat if free, and
       otherwise takes a uniformly random free seat. What is the probability that the <em>99th</em> passenger
@@ -700,6 +817,15 @@ QBank.add([
     category: "conditional",
     difficulty: 1,
     time: 90,
+    options: [
+      `$\\tfrac{1}{4}$`,
+      `$\\tfrac{1}{3}$`,
+      `$\\tfrac{3}{8}$`,
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{2}{3}$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `Two fair dice are rolled. Given that at least one shows an even number, what is the probability
       that both are even?`,
     hint: `Count the complement of "at least one even" first — it is a clean square.`,
@@ -708,15 +834,6 @@ QBank.add([
       $$P = \\frac{9}{27} = \\frac{1}{3}.$$
       <p>Note this is not $\\frac12$: conditioning on "at least one" always favours the mixed cases, because
       there are two ways to be mixed.</p>`,
-    options: [
-      `$\\frac{1}{4}$`,
-      `$\\frac{1}{3}$`,
-      `$\\frac{1}{2}$`,
-      `$\\frac{2}{3}$`,
-      `$\\frac{3}{4}$`,
-    ],
-    answer: 1,
-    tags: ["conditioning", "complement"],
   },
 
   {
@@ -724,6 +841,15 @@ QBank.add([
     category: "conditional",
     difficulty: 3,
     time: 180,
+    options: [
+      `$\\tfrac{1}{4}$`,
+      `$\\tfrac{1}{3}$`,
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{2}{3}$`,
+      `$\\tfrac{3}{4}$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `Three prisoners A, B and C are told that exactly one of them will be released, chosen
       uniformly at random. Prisoner A asks the guard to name one of B or C who will <em>not</em> be released.
       The guard, who knows the outcome and picks uniformly at random when both B and C qualify, says "B".
@@ -745,6 +871,15 @@ QBank.add([
     category: "conditional",
     difficulty: 3,
     time: 200,
+    options: [
+      `$\\tfrac{1}{2}$`,
+      `$\\tfrac{25}{51}$`,
+      `$\\tfrac{26}{51}$`,
+      `$\\tfrac{2}{3}$`,
+      `Close to $1$ with optimal play`,
+    ],
+    answer: 0,
+    source: "Maven OA",
     question: `A standard 52-card deck (26 red, 26 black) is shuffled and dealt face up one card at a time.
       At any point before a card is dealt you may say "stop" — you then win if the <em>next</em> card is red.
       You must call stop at some point (if you reach the last card you are forced to take it). What is the
@@ -770,6 +905,15 @@ QBank.add([
     category: "logic",
     difficulty: 2,
     time: 140,
+    options: [
+      `$1$`,
+      `$10$`,
+      `$25$`,
+      `$50$`,
+      `$51$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `100 light bulbs numbered 1 to 100 start switched off. Person 1 toggles every bulb; person 2
       toggles every 2nd bulb; person 3 every 3rd; and so on through person 100. How many bulbs are on at
       the end?`,
@@ -785,6 +929,15 @@ QBank.add([
     category: "logic",
     difficulty: 2,
     time: 130,
+    options: [
+      `Light rope A at both ends and B at one end; when A is consumed (30 min) light B's other end`,
+      `Light A at one end, then B at one end when A finishes, and cut B in half`,
+      `Light both ropes at both ends at the same time`,
+      `Light A at both ends, then relight it at both ends a second time`,
+      `It cannot be done without a third rope`,
+    ],
+    answer: 0,
+    source: "Maven OA",
     question: `You have two ropes and a lighter. Each rope burns through in exactly 60 minutes, but burns at
       an uneven and unknown rate along its length. How do you measure exactly 45 minutes?`,
     hint: `Lighting a rope at both ends halves its remaining time regardless of how unevenly it burns.`,
@@ -801,6 +954,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 240,
+    options: [
+      `$6$`,
+      `$7$`,
+      `$8$`,
+      `$10$`,
+      `$11$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `You have 25 horses and a track that races exactly 5 at a time. You have no timer — each race
       gives only the finishing order of those 5. What is the minimum number of races needed to identify the
       fastest three horses?`,
@@ -821,6 +983,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 240,
+    options: [
+      `$7$`,
+      `$10$`,
+      `$14$`,
+      `$20$`,
+      `$50$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `You have two identical eggs and a 100-storey building. An egg breaks if dropped from floor $N$
       or above, and survives below it; $N$ is unknown. A broken egg cannot be reused. What is the minimum
       number of drops that guarantees finding $N$ in the worst case?`,
@@ -841,6 +1012,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 200,
+    options: [
+      `$8$`,
+      `$10$`,
+      `$32$`,
+      `$100$`,
+      `$500$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `You have 1000 bottles of wine, exactly one of which is poisoned. The poison takes 24 hours to
       show any effect, and you have only 24 hours. What is the minimum number of test subjects needed to
       identify the poisoned bottle with certainty?`,
@@ -858,6 +1038,15 @@ QBank.add([
     category: "logic",
     difficulty: 2,
     time: 140,
+    options: [
+      `$2$`,
+      `$3$`,
+      `$4$`,
+      `$5$`,
+      `$8$`,
+    ],
+    answer: 0,
+    source: "Maven OA",
     question: `You have 9 visually identical balls; one is slightly heavier. Using a balance scale (which
       only reports left-heavier, right-heavier, or equal), what is the minimum number of weighings that
       guarantees finding the heavy ball?`,
@@ -876,6 +1065,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 180,
+    options: [
+      `Take 1 coin from bag 1, 2 from bag 2, ..., 10 from bag 10; the excess over 550 g is the bag number`,
+      `Take one coin from every bag and weigh them together`,
+      `Take ten coins from every bag and weigh them together`,
+      `Weigh five bags against the other five`,
+      `It cannot be done in a single weighing`,
+    ],
+    answer: 0,
+    source: "Maven OA",
     question: `You have 10 bags of coins. Every coin weighs 10g except in one bag, where every coin weighs
       11g. You have a digital scale that gives an exact weight reading, but you may use it only <em>once</em>.
       How do you identify the heavy bag?`,
@@ -893,6 +1091,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 200,
+    options: [
+      `$15$`,
+      `$16$`,
+      `$17$`,
+      `$19$`,
+      `$21$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Four people must cross a bridge at night. They have one torch, the bridge holds at most two
       people at a time, and anyone crossing must carry the torch. They walk at different speeds, needing
       1, 2, 5 and 10 minutes respectively; a pair moves at the slower person's pace. What is the minimum
@@ -912,6 +1119,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 220,
+    options: [
+      `$1, 4, 9$`,
+      `$1, 6, 6$`,
+      `$2, 2, 9$`,
+      `$2, 3, 6$`,
+      `$3, 3, 4$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `A census taker asks a woman the ages of her three children (all integers). She says the product
       is 36 and the sum equals the number on the house next door. He looks at the house, thinks, and says he
       needs more information. She replies "the eldest plays piano". He then knows the ages. What are they?`,
@@ -931,6 +1147,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 180,
+    options: [
+      `$1$`,
+      `$3$`,
+      `$5$`,
+      `$7$`,
+      `$9$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `Ten people stand in a circle numbered 1 to 10. Starting the count at person 1, every second
       person is eliminated (so 2 goes first, then 4, 6, 8, 10, then 3, ...) continuing around until one
       remains. Which position survives?`,
@@ -949,6 +1174,15 @@ QBank.add([
     category: "logic",
     difficulty: 2,
     time: 140,
+    options: [
+      `$10$`,
+      `$11$`,
+      `$12$`,
+      `$22$`,
+      `$24$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `In a 12-hour period, how many times do the hour and minute hands of an analogue clock overlap
       exactly?`,
     hint: `Work in relative angular speed. How many full laps does the minute hand gain on the hour hand?`,
@@ -964,6 +1198,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 220,
+    options: [
+      `$50$`,
+      `$75$`,
+      `$99$`,
+      `$99.5$`,
+      `$100$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `100 prisoners stand in a line, each wearing a red or blue hat. Each can see all the hats in
       front of them but not their own or those behind. Starting from the back, each must say "red" or "blue";
       they are freed if correct. They may agree a strategy in advance but cannot communicate afterwards.
@@ -985,6 +1228,15 @@ QBank.add([
     category: "logic",
     difficulty: 3,
     time: 180,
+    options: [
+      `$2$`,
+      `$3$`,
+      `$4$`,
+      `$5$`,
+      `$6$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `You have 12 coins, exactly one of which is counterfeit — it may be either heavier or lighter,
       and you do not know which. Using a balance scale, what is the minimum number of weighings that could
       possibly suffice to identify the fake <em>and</em> say whether it is heavy or light? Justify the bound
@@ -1007,6 +1259,15 @@ QBank.add([
     category: "number theory",
     difficulty: 1,
     time: 80,
+    options: [
+      `$1$`,
+      `$3$`,
+      `$5$`,
+      `$7$`,
+      `$9$`,
+    ],
+    answer: 4,
+    source: "Maven OA",
     question: `What is the last digit of $7^{2026}$?`,
     hint: `Powers of 7 cycle in their last digit with a short period.`,
     solution: `<p>Last digits of $7^n$: $7, 9, 3, 1, 7, 9, 3, 1, \\dots$ — period 4.</p>
@@ -1020,6 +1281,15 @@ QBank.add([
     category: "number theory",
     difficulty: 2,
     time: 90,
+    options: [
+      `$1$`,
+      `$2$`,
+      `$3$`,
+      `$4$`,
+      `$6$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `What is the remainder when $2^{2026}$ is divided by 7?`,
     hint: `Find the smallest power of 2 that is 1 mod 7.`,
     solution: `<p>$2^1 = 2, 2^2 = 4, 2^3 = 8 \\equiv 1 \\pmod 7$ — period 3.</p>
@@ -1032,6 +1302,15 @@ QBank.add([
     category: "number theory",
     difficulty: 3,
     time: 140,
+    options: [
+      `$01$`,
+      `$11$`,
+      `$21$`,
+      `$61$`,
+      `$81$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `What are the last two digits of $11^{2026}$?`,
     hint: `Expand $(10+1)^n$ and notice how few terms survive mod 100.`,
     solution: `<p>By the binomial theorem, $(1+10)^n = 1 + 10n + \\binom{n}{2}100 + \\dots$, and every term
@@ -1047,6 +1326,15 @@ QBank.add([
     category: "number theory",
     difficulty: 2,
     time: 110,
+    options: [
+      `$16$`,
+      `$20$`,
+      `$21$`,
+      `$24$`,
+      `$25$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `How many zeros does $100!$ end in?`,
     hint: `Zeros come from factors of 10 = 2 × 5, and fives are scarcer than twos. Do not forget 25, 50, 75
       and 100 contribute twice.`,
@@ -1063,6 +1351,15 @@ QBank.add([
     category: "number theory",
     difficulty: 2,
     time: 120,
+    options: [
+      `$33$`,
+      `$44$`,
+      `$48$`,
+      `$49$`,
+      `$50$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `What is the largest power of 3 that divides $100!$?`,
     hint: `Same method as counting trailing zeros, but the tower goes further because 3 is small.`,
     solution: `<p>$$\\left\\lfloor \\frac{100}{3}\\right\\rfloor + \\left\\lfloor \\frac{100}{9}\\right\\rfloor
@@ -1076,6 +1373,15 @@ QBank.add([
     category: "number theory",
     difficulty: 3,
     time: 160,
+    options: [
+      `$1$`,
+      `$7$`,
+      `$15$`,
+      `$63$`,
+      `$4095$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `What is $\\gcd(2^{30} - 1,\\ 2^{18} - 1)$?`,
     hint: `There is a clean identity: the gcd of two numbers of this shape is another number of the same shape.`,
     solution: `<p>The identity is</p>
@@ -1090,6 +1396,15 @@ QBank.add([
     category: "number theory",
     difficulty: 2,
     time: 110,
+    options: [
+      `$0$`,
+      `$1$`,
+      `$3$`,
+      `$5$`,
+      `$7$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `What is the last digit of $1! + 2! + 3! + \\dots + 100!$?`,
     hint: `Almost every term contributes nothing. Find where the contributions stop.`,
     solution: `<p>From $5!$ onwards every factorial contains both 2 and 5, hence ends in 0. So only the first
@@ -1103,6 +1418,15 @@ QBank.add([
     category: "number theory",
     difficulty: 3,
     time: 170,
+    options: [
+      `$11$`,
+      `$18$`,
+      `$22$`,
+      `$23$`,
+      `$35$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `A shop sells items only in packs of 5 and packs of 7. What is the largest number of items that
       <em>cannot</em> be bought exactly?`,
     hint: `Once you can make 5 consecutive values, you can make everything above by adding 5s. Find the first
@@ -1123,6 +1447,15 @@ QBank.add([
     category: "market making",
     difficulty: 3,
     time: 200,
+    options: [
+      `$+\\tfrac{2}{5}$`,
+      `$0$`,
+      `$-\\tfrac{1}{5}$`,
+      `$-\\tfrac{2}{5}$`,
+      `$-1$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `A security's true value $V$ is uniform on $\\{8, 9, 10, 11, 12\\}$. You must quote a two-way
       market before learning $V$. You quote 9 bid / 11 ask, in size 1. Your counterparty knows $V$ exactly and
       trades with you only when it profits them (buying at your ask when $V > 11$, selling at your bid when
@@ -1145,6 +1478,15 @@ QBank.add([
     category: "market making",
     difficulty: 2,
     time: 150,
+    options: [
+      `Consistent; no arbitrage available`,
+      `Consistent; the book carries a $4.5\\%$ overround`,
+      `Inconsistent; lock in about $4.8\\%$`,
+      `Inconsistent; lock in about $4.5\\%$`,
+      `Inconsistent; lock in about $9.5\\%$`,
+    ],
+    answer: 2,
+    source: "Maven OA",
     question: `A two-outcome event is quoted at decimal odds of 2.0 on outcome A and 2.2 on outcome B (decimal
       odds $d$ means a £1 stake returns £$d$ in total if it wins). Are these quotes internally consistent?
       If not, what riskless return can you lock in?`,
@@ -1166,6 +1508,15 @@ QBank.add([
     category: "market making",
     difficulty: 2,
     time: 140,
+    options: [
+      `Buy; fair value $\\tfrac{10}{3} \\approx 3.33$`,
+      `Buy; fair value $3.50$`,
+      `Sell; fair value $3.00$`,
+      `Sell; fair value $4.00$`,
+      `Pass; fair value is exactly $3.20$`,
+    ],
+    answer: 0,
+    source: "Maven OA",
     question: `A contract pays out, in pounds, the value shown on a single roll of a fair die — except that
       if a 1 is rolled, the contract pays nothing instead. Someone offers to sell you this contract for
       £3.20. Should you buy, sell, or pass?`,
@@ -1184,6 +1535,15 @@ QBank.add([
     category: "market making",
     difficulty: 3,
     time: 170,
+    options: [
+      `$10\\%$`,
+      `$20\\%$`,
+      `$36\\%$`,
+      `$60\\%$`,
+      `$100\\%$`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `You can repeatedly bet on a coin that comes up heads with probability 0.6, at even money, and
       you may stake any fraction of your bankroll. What fraction maximises the long-run growth rate of your
       wealth?`,
@@ -1204,6 +1564,15 @@ QBank.add([
     category: "market making",
     difficulty: 2,
     time: 150,
+    options: [
+      `$0$`,
+      `$1$`,
+      `$2$`,
+      `$3$`,
+      `$4$`,
+    ],
+    answer: 3,
+    source: "Maven OA",
     question: `A test has five answer options per question. A correct answer scores $+1$, a wrong answer
       $-1$, and a skipped question scores $0$. How many options must you be able to eliminate with certainty
       before guessing becomes worthwhile?`,
@@ -1225,6 +1594,15 @@ QBank.add([
     category: "market making",
     difficulty: 3,
     time: 220,
+    options: [
+      `Stop immediately; the game is worth $0$`,
+      `Stop the first time the position is positive`,
+      `Stop once the position exceeds $c$`,
+      `Never stop; the walk is recurrent so it returns arbitrarily high`,
+      `Stop at position $1/c$`,
+    ],
+    answer: 0,
+    source: "Maven OA",
     question: `A symmetric random walk starts at 0 and moves $\\pm 1$ with equal probability each step. You
       may stop at any time and collect your current position, minus a cost of $c > 0$ per step taken. What is
       the optimal stopping strategy, and what does that tell you about the value of the game?`,
@@ -1246,6 +1624,15 @@ QBank.add([
     category: "market making",
     difficulty: 3,
     time: 200,
+    options: [
+      `Any $u > 0$ works, given a wide enough spread`,
+      `No spread rescues it: widening also drives away the uninformed flow you profit from`,
+      `Viability requires $u > \\tfrac{1}{2}$ regardless of $L$`,
+      `Viability depends only on $L$, not on $u$`,
+      `Widening the spread always raises expected profit per trade`,
+    ],
+    answer: 1,
+    source: "Maven OA",
     question: `You quote a two-way market in size 1. A fraction $u$ of your counterparties are uninformed
       (equally likely to buy or sell regardless of value), and the remaining $1-u$ are perfectly informed. On
       an informed trade you lose an average of $L$; on an uninformed trade you earn half your spread, $s/2$.
