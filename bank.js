@@ -140,7 +140,7 @@ const QBank = (function () {
   /* ---- Multiple choice -------------------------------------------------- */
 
   function isMultipleChoice(q) {
-    return Array.isArray(q.options) && q.options.length > 0;
+    return !!q && Array.isArray(q.options) && q.options.length > 0;
   }
 
   /* Why a question cannot appear in a paper of this format, or null if it can.

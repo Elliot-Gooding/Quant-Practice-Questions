@@ -1,75 +1,254 @@
-<!doctype html><meta charset="utf-8"><title>Quant practice — self checks</title>
-<style>body{background:#0f1b2d;color:#e8edf5;font:14px/1.5 ui-monospace,Consolas,monospace;padding:2rem}
-pre{white-space:pre-wrap}</style>
-<body><h1 style="font:400 20px Georgia,serif">Self checks</h1><pre id="out">running...</pre>
+<!doctype html>
+<meta charset="utf-8">
+<title>Quant practice — self checks</title>
+<style>
+  body { background:#0f1b2d; color:#e8edf5; font:14px/1.6 ui-monospace,Consolas,monospace; padding:2rem; }
+  h1 { font:400 20px Georgia,serif; }
+  pre { white-space:pre-wrap; }
+  .hidden { position:absolute; left:-9999px; width:600px; }
+</style>
+
+<body>
+<h1>Self checks</h1>
+<pre id="out">running…</pre>
+
+<!-- The app mounts into these; kept off-screen so the report stays readable. -->
+<div class="hidden">
+  <nav id="tabs"></nav>
+  <main id="view"></main>
+  <footer id="status"></footer>
+</div>
+
 <!-- Sandboxed storage key: Chrome shares localStorage across file:// pages, so
      without this the checks below would wipe real practice history. -->
 <script>window.QSTORE_KEY = "quant-practice:selftest";</script>
+
 <script src="bank.js"></script>
 <script src="validate-core.js"></script>
 <script src="formats.js"></script>
 <script src="questions/questions.js"></script>
 <script src="questions/questions-maven.js"></script>
 <script src="store.js"></script>
+<script src="app.js"></script>
+<script src="view-practice.js"></script>
+
+<script>
+/* Synthetic questions the view tests drive, in their own category so the real
+   bank cannot make the assertions flaky. */
+QBank.add([
+  { id: "st-mc", category: "selftest", difficulty: 1, time: 60,
+    question: `Which is two?`, hint: `Count.`, solution: `It is two.`,
+    options: [`one`, `two`, `three`, `four`, `five`], answer: 1 },
+  { id: "st-free-1", category: "selftest", difficulty: 1, time: 60,
+    question: `Free response one`, hint: `A hint.`, solution: `A solution.` },
+  { id: "st-free-2", category: "selftest", difficulty: 1, time: 60,
+    question: `Free response two`, hint: `A hint.`, solution: `A solution.` },
+]);
+</script>
+
 <script>
 const log = [];
-const check = (name, got, want) => log.push(
-  (JSON.stringify(got) === JSON.stringify(want) ? "PASS  " : "FAIL  ") +
-  name + (JSON.stringify(got) === JSON.stringify(want) ? "" : "   got " + JSON.stringify(got) + " want " + JSON.stringify(want)));
+let failures = 0;
 
-QStore.reset();
-log.push("persistent storage: " + QStore.persistent);
+function check(name, got, want) {
+  const ok = JSON.stringify(got) === JSON.stringify(want);
+  if (!ok) failures++;
+  log.push((ok ? "PASS  " : "FAIL  ") + name +
+    (ok ? "" : "\n        got  " + JSON.stringify(got) + "\n        want " + JSON.stringify(want)));
+}
+function section(title) { log.push("\n" + title); }
 
-const qs = QBank.all();
-const a = qs[0], b = qs[1], c = qs[2];
+/* ==========================================================================
+   STORE
+   ========================================================================== */
 
-// a: wrong then correct.  b: always wrong.  c: correct but slow.
-QStore.recordAttempt({ qid: a.id, mode: "practice", outcome: "wrong",   timeMs: 30000 });
-QStore.recordAttempt({ qid: a.id, mode: "practice", outcome: "correct", timeMs: 20000, hintUsed: true });
-QStore.recordAttempt({ qid: b.id, mode: "test", outcome: "wrong", answered: 2, timeMs: 40000, testId: "t1" });
-QStore.recordAttempt({ qid: b.id, mode: "practice", outcome: "wrong", timeMs: 50000 });
-QStore.recordAttempt({ qid: c.id, mode: "practice", outcome: "correct", timeMs: (c.time * 1000) + 60000 });
+function storeTests() {
+  section("store");
+  QStore.reset();
+  log.push("  persistent storage: " + QStore.persistent);
 
-const sa = QStore.questionStats(a.id, a);
-check("a seen", sa.seen, 2);
-check("a accuracy", sa.accuracy, 0.5);
-check("a median ms", sa.medianTimeMs, 25000);
-check("a hint rate", sa.hintRate, 0.5);
+  const qs = QBank.all();
+  const a = qs[0], b = qs[1], c = qs[2];
 
-check("a needsReview (last was correct, inside target)", QStore.needsReview(a), false);
-check("b needsReview (last wrong)", QStore.needsReview(b), true);
-check("c needsReview (correct but over target)", QStore.needsReview(c), true);
-check("untouched needsReview", QStore.needsReview(qs[10]), false);
+  QStore.recordAttempt({ qid: a.id, mode: "practice", outcome: "wrong",   timeMs: 30000 });
+  QStore.recordAttempt({ qid: a.id, mode: "practice", outcome: "correct", timeMs: 20000, hintUsed: true });
+  QStore.recordAttempt({ qid: b.id, mode: "test", outcome: "wrong", answered: 2, timeMs: 40000, testId: "t1" });
+  QStore.recordAttempt({ qid: b.id, mode: "practice", outcome: "wrong", timeMs: 50000 });
+  QStore.recordAttempt({ qid: c.id, mode: "practice", outcome: "correct", timeMs: (c.time * 1000) + 60000 });
 
-const o = QStore.overallStats(qs);
-check("attempted", o.attempted, 3);
-check("bank size", o.bankSize, qs.length);
-check("review count", o.reviewCount, 2);
-check("weakest first is b", o.weakest[0].q.id, b.id);
-check("slowest first is c", o.slowest[0].q.id, c.id);
-check("ungraded excluded from accuracy", QStore.questionStats(qs[10].id, qs[10]).accuracy, null);
+  const sa = QStore.questionStats(a.id, a);
+  check("seen count", sa.seen, 2);
+  check("accuracy ignores order", sa.accuracy, 0.5);
+  check("median time", sa.medianTimeMs, 25000);
+  check("hint rate", sa.hintRate, 0.5);
 
-// cursors keyed per filter
-QStore.setCursor({ category: "logic" }, 7);
-check("cursor logic", QStore.getCursor({ category: "logic" }), 7);
-check("cursor other filter independent", QStore.getCursor({ category: "probability" }), 0);
+  check("review: last correct and in time, no", QStore.needsReview(a), false);
+  check("review: last wrong, yes", QStore.needsReview(b), true);
+  check("review: correct but over target, yes", QStore.needsReview(c), true);
+  check("review: never attempted, no", QStore.needsReview(qs[10]), false);
 
-// export / import round trip
-const dump = QStore.exportJSON();
-QStore.reset();
-check("reset clears", QStore.attempts().length, 0);
-const r1 = QStore.importJSON(dump);
-check("import ok", r1.ok, true);
-check("import added all", r1.added, 5);
-check("import restored stats", QStore.questionStats(a.id, a).accuracy, 0.5);
-check("import restored cursor", QStore.getCursor({ category: "logic" }), 7);
-const r2 = QStore.importJSON(dump);
-check("re-import is idempotent", [r2.added, r2.skipped], [0, 5]);
-check("bad json rejected", QStore.importJSON("{nope").ok, false);
-check("wrong shape rejected", QStore.importJSON('{"hello":1}').ok, false);
-check("rejected import left data intact", QStore.attempts().length, 5);
+  const o = QStore.overallStats(qs);
+  check("attempted", o.attempted, 3);
+  check("bank size", o.bankSize, qs.length);
+  check("review count", o.reviewCount, 2);
+  check("weakest ranks the always-wrong first", o.weakest[0].q.id, b.id);
+  check("slowest ranks by ratio to target", o.slowest[0].q.id, c.id);
+  check("ungraded has no accuracy", QStore.questionStats(qs[10].id, qs[10]).accuracy, null);
 
-QStore.reset();
-document.getElementById("out").textContent = log.join("\n") +
-  "\n\n" + log.filter(l => l.startsWith("FAIL")).length + " failure(s)";
+  QStore.setCursor({ category: "logic" }, 7);
+  check("cursor stored per filter", QStore.getCursor({ category: "logic" }), 7);
+  check("other filters unaffected", QStore.getCursor({ category: "probability" }), 0);
+
+  const dump = QStore.exportJSON();
+  QStore.reset();
+  check("reset clears attempts", QStore.attempts().length, 0);
+
+  const r1 = QStore.importJSON(dump);
+  check("import succeeds", r1.ok, true);
+  check("import restores every attempt", r1.added, 5);
+  check("import restores stats", QStore.questionStats(a.id, a).accuracy, 0.5);
+  check("import restores cursors", QStore.getCursor({ category: "logic" }), 7);
+
+  const r2 = QStore.importJSON(dump);
+  check("re-import adds nothing", [r2.added, r2.skipped], [0, 5]);
+  check("invalid json refused", QStore.importJSON("{nope").ok, false);
+  check("wrong shape refused", QStore.importJSON('{"hello":1}').ok, false);
+  check("refused import leaves data alone", QStore.attempts().length, 5);
+
+  const replaced = QStore.importJSON(dump, { merge: false });
+  check("replace mode swaps wholesale", [replaced.ok, QStore.attempts().length], [true, 5]);
+
+  QStore.reset();
+}
+
+/* ==========================================================================
+   VALIDATOR
+   ========================================================================== */
+
+function validatorTests() {
+  section("validator");
+  const formats = QFormats.all();
+
+  const clean = QValidate.validate({ questions: QBank.all(), formats, problems: QBank.problems() });
+  check("real bank has no errors", clean.issues.filter(i => i.severity === "error").length, 0);
+
+  const bad = QValidate.validate({
+    formats,
+    questions: [
+      { id: "x", category: "c", difficulty: 1, time: 10, question: `q`, solution: `s`, hint: `h`,
+        options: [`a`, `b`, `c`, `d`, `e`], answer: 9 },
+      { id: "x", category: "c", difficulty: 1, time: 10, question: `q`, solution: `s`, hint: `h` },
+      { id: "y", category: "c", difficulty: 7, time: 10, question: `unclosed $x`, solution: `s`, hint: `h` },
+    ],
+  });
+  const messages = bad.issues.filter(i => i.severity === "error").map(i => i.field);
+  check("catches out-of-range answer", messages.includes("answer"), true);
+  check("catches duplicate id", messages.includes("id"), true);
+  check("catches bad difficulty", messages.includes("difficulty"), true);
+  check("catches unclosed $", messages.includes("question"), true);
+
+  check("balanced inline maths is fine", QValidate.scanDelimiters("a $x$ b").dangling, null);
+  check("balanced display maths is fine", QValidate.scanDelimiters("a $$x$$ b").dangling, null);
+  check("escaped dollar is not a delimiter", QValidate.scanDelimiters("costs \\$5 today").dangling, null);
+  check("unclosed display block caught",
+    QValidate.scanDelimiters("$$x").dangling, "unclosed $$ display block");
+
+  check("eligibility respects option count", QBank.ineligibleReason(
+    { options: [`a`, `b`, `c`], answer: 0 }, { optionCount: 5 }), "has 3 options, format needs 5");
+  check("eligibility passes a good question", QBank.ineligibleReason(
+    { options: [`a`, `b`, `c`, `d`, `e`], answer: 4 }, { optionCount: 5 }), null);
+}
+
+/* ==========================================================================
+   PRACTICE VIEW
+   ========================================================================== */
+
+const $ = sel => document.querySelector(sel);
+const key = k => document.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
+
+function setSelect(sel, value) {
+  const node = $(sel);
+  node.value = value;
+  node.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function practiceTests() {
+  section("practice view");
+  QStore.reset();
+  QApp.start();                 // installs the keyboard listener the tests use
+  QApp.go("practice", { force: true });
+
+  setSelect("#mode", "sequential");
+  setSelect("#category", "selftest");
+
+  check("sequential starts at the first question", $("#question").textContent.includes("Which is two?"), true);
+  check("options are rendered", $("#options").querySelectorAll(".option").length, 5);
+  check("option list is visible for MCQ", $("#options").hidden, false);
+
+  // Answer correctly by matching text, since display order is shuffled.
+  const buttons = [...$("#options").querySelectorAll(".option")];
+  buttons.filter(b => b.querySelector(".text").textContent === "two")[0].click();
+
+  check("correct answer recorded", QStore.questionStats("st-mc").correct, 1);
+  check("grading marks the right option", $("#options").querySelector(".correct .text").textContent, "two");
+  check("answering locks the options", buttons.every(b => b.disabled), true);
+  check("solution opens after grading", $("#solution").classList.contains("open"), true);
+  check("auto-revealed solution is not counted as looked up",
+    QStore.attemptsFor("st-mc")[0].solutionShown, false);
+  check("no self-grade prompt for multiple choice", $("#selfgrade").hidden, true);
+
+  buttons.filter(b => b.querySelector(".text").textContent === "five")[0].click();
+  check("a second click cannot overwrite the grade", QStore.attemptsFor("st-mc").length, 1);
+
+  key("n");
+  check("next moves to the second question", $("#question").textContent.includes("Free response one"), true);
+  check("options hidden for free response", $("#options").hidden, true);
+
+  key("g");
+  check("self-grade records correct", QStore.questionStats("st-free-1").correct, 1);
+  check("self-grade without revealing does not mark it looked up",
+    QStore.attemptsFor("st-free-1")[0].solutionShown, false);
+
+  key("n");
+  key("s");
+  check("solution reveal shows the self-grade prompt", $("#selfgrade").hidden, false);
+  key("m");
+  check("missed it records wrong", QStore.questionStats("st-free-2").wrong, 1);
+  check("revealed solution is recorded", QStore.attemptsFor("st-free-2")[0].solutionShown, true);
+
+  check("review set now holds the wrong one",
+    QStore.reviewSet(QBank.filter({ category: "selftest" })).map(q => q.id), ["st-free-2"]);
+
+  // Moving on without touching anything must not record an attempt.
+  const before = QStore.attempts().length;
+  key("n"); key("n");
+  check("browsing records nothing", QStore.attempts().length, before);
+
+  // Sequential position survives a remount.
+  const at = $("#status").textContent.match(/^(\d+) of/)[1];
+  QApp.go("practice", { force: true });
+  setSelect("#mode", "sequential");
+  setSelect("#category", "selftest");
+  check("sequential resumes where it left off", $("#status").textContent.startsWith(at + " of"), true);
+
+  // Review mode serves only the failed question.
+  setSelect("#mode", "review");
+  check("review mode serves the failed question",
+    $("#question").textContent.includes("Free response two"), true);
+
+  QStore.reset();
+}
+
+window.addEventListener("load", () => {
+  try {
+    storeTests();
+    validatorTests();
+    practiceTests();
+  } catch (e) {
+    failures++;
+    log.push("\nTHREW  " + (e && e.stack ? e.stack : e));
+  }
+  document.getElementById("out").textContent =
+    log.join("\n") + "\n\n" + (failures ? failures + " failure(s)" : "all checks passed");
+});
 </script>
