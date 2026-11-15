@@ -56,6 +56,7 @@ const files = [
   path.join(ROOT, "bank.js"),
   path.join(ROOT, "validate-core.js"),
   path.join(ROOT, "formats.js"),
+  path.join(ROOT, "gen-arithmetic.js"),
   ...bankFiles(),
 ];
 
@@ -85,7 +86,7 @@ const sandbox = { console };
 let registries;
 try {
   registries = vm.runInNewContext(
-    sources.join("\n;\n") + "\n;({ QBank: QBank, QFormats: QFormats, QValidate: QValidate });",
+    sources.join("\n;\n") + "\n;({ QBank: QBank, QFormats: QFormats, QValidate: QValidate, QGenerators: QGenerators });",
     sandbox,
     { filename: "bank+questions" }
   );
@@ -93,7 +94,7 @@ try {
   die("failed to load the bank: " + e.message);
 }
 
-const { QBank, QFormats, QValidate } = registries;
+const { QBank, QFormats, QValidate, QGenerators } = registries;
 
 /* ---- Validate -------------------------------------------------------------- */
 
@@ -103,7 +104,10 @@ const formats = QFormats.all();
 const result = QValidate.validate({
   questions,
   formats,
-  problems: QBank.problems().concat(QFormats.problems()),
+  problems: QBank.problems().concat(QFormats.problems(), QGenerators.problems()),
+  // Every generated format: 50 whole papers made and re-marked from scratch.
+  generators: QGenerators.all(),
+  generatorPapers: 50,
 });
 
 const errors = result.issues.filter(i => i.severity === QValidate.ERROR);
@@ -147,7 +151,7 @@ function printIssues(label, list, colour) {
 }
 
 console.log(c.bold("\nQuant practice — bank validation"));
-console.log(c.dim(files.length - 3 + " bank file(s), " + questions.length + " questions, " +
+console.log(c.dim(files.length - 4 + " bank file(s), " + questions.length + " questions, " +
   formats.length + " test format(s)"));
 
 printIssues("ERRORS", errors, c.red);
@@ -181,8 +185,15 @@ console.log("  " + (tagNames.length
 console.log(c.bold("\nTest eligibility"));
 for (const e of s.eligibility) {
   const ok = e.shortBy === 0;
-  console.log("  " + pad(e.id, 16) + pad(e.eligible + " / " + e.questionCount, 12) +
+  console.log("  " + pad(e.id, 16) + pad(e.generated ? "generated" : e.eligible + " / " + e.questionCount, 12) +
     (ok ? c.green("ready") : c.yellow(e.shortBy + " short")));
+}
+
+if (s.generated && s.generated.length) {
+  console.log(c.bold("\nGenerated papers, re-marked"));
+  for (const g of s.generated)
+    console.log("  " + pad(g.format, 16) + pad(g.sampled + " questions", 18) +
+      (g.failures ? c.red(g.failures + " wrong") : c.green("all correct")));
 }
 
 console.log("");

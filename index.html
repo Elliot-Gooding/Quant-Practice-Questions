@@ -135,6 +135,18 @@
   .option:disabled { cursor: default; opacity: 1; }
   .option.muted:disabled { opacity: .55; }
 
+  /* Generated arithmetic: fractions are stacked in plain CSS rather than KaTeX,
+     so a sprint question paints instantly and reads the same offline. */
+  .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; line-height: 1.15; font-size: .85em; margin: 0 .1em; }
+  .frac span:first-child { border-bottom: 1px solid currentColor; padding: 0 .25em; }
+  .frac span:last-child { padding: 0 .25em; }
+  .sum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* A sprint question is one sum: make it the biggest thing on the page. */
+  .sprint #qtext { font-size: 34px; text-align: center; padding: .75rem 0 .25rem; }
+  .sprint .options { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .sprint .options li { margin-top: 0; }
+  .sprint .option { font-size: 22px; padding: .8rem .9rem; align-items: center; }
+
   /* Hint / solution unfold beneath the question */
   .reveal { display: none; border-top: 1px solid var(--panel-edge); margin-top: 1.75rem; padding-top: 1.5rem; }
   .reveal.open { display: block; }
@@ -255,8 +267,11 @@
 <script src="bank.js"></script>
 <script src="validate-core.js"></script>
 <script src="formats.js"></script>
+<script src="gen-arithmetic.js"></script>
 <script src="questions/questions.js"></script>
 <script src="questions/questions-maven.js"></script>
+<script src="questions/questions-flow-arithmetic.js"></script>
+<script src="questions/questions-flow-sequences.js"></script>
 
 <!-- App. store.js and app.js before the views, which register themselves. -->
 <script src="store.js"></script>

@@ -40,7 +40,8 @@ QApp.register((function () {
     const result = QValidate.validate({
       questions,
       formats,
-      problems: QBank.problems().concat(QFormats.problems()),
+      problems: QBank.problems().concat(QFormats.problems(), QGenerators.problems()),
+      generators: QGenerators.all(),      // re-marks a few generated papers too
     });
 
     const errors = result.issues.filter(i => i.severity === "error");
@@ -80,6 +81,14 @@ QApp.register((function () {
             <th class="num">eligible</th><th class="num">needs</th><th></th>
           </tr></thead>
           <tbody>${formats.map(f => {
+            if (f.generator) return `<tr>
+              <td>${f.name}</td>
+              <td class="num subtle">${f.optionCount}</td>
+              <td class="num subtle">—</td>
+              <td class="num subtle">${f.questionCount}</td>
+              <td class="${QGenerators.get(f.generator) ? "good" : "bad"}">${
+                QGenerators.get(f.generator) ? "generated each sitting" : "generator missing"}</td>
+            </tr>`;
             const eligible = QBank.eligible(f).length;
             const short = Math.max(0, f.questionCount - eligible);
             return `<tr>

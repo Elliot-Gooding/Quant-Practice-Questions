@@ -163,6 +163,93 @@ const QValidate = (function () {
     return issues;
   }
 
+  /* ---- Re-marking generated questions --------------------------------------
+
+     A generator's questions are never read by a person before they are sat, so
+     they are re-marked here instead. Each one carries check = { expr, value,
+     options } in plain text; this evaluates expr from scratch — its own parser,
+     its own BigInt fractions, sharing no code with the generator — and insists
+     that the keyed option is the true value and that no other option is.      */
+
+  function parseValue(text) {
+    const m = /^(-?)(\d+)(?:\.(\d+))?(?:\/(\d+))?$/.exec(String(text).trim());
+    if (!m) throw new Error("cannot read the number \"" + text + "\"");
+    const frac = m[3] || "";
+    let n = BigInt(m[2] + frac);
+    let d = BigInt("1" + "0".repeat(frac.length));
+    if (m[4] !== undefined) d *= BigInt(m[4]);
+    if (d === 0n) throw new Error("zero denominator in \"" + text + "\"");
+    if (m[1]) n = -n;
+    return { n, d };
+  }
+
+  const same = (x, y) => x.n * y.d === y.n * x.d;
+
+  function evalCheck(expr) {
+    const m = /^\(?(-?[\d.]+(?:\/\d+)?)\)? ([-+*\/]) \(?(-?[\d.]+(?:\/\d+)?)\)?$/.exec(expr);
+    if (!m) throw new Error("cannot read the sum \"" + expr + "\"");
+    const a = parseValue(m[1]), b = parseValue(m[3]);
+    switch (m[2]) {
+      case "+": return { n: a.n * b.d + b.n * a.d, d: a.d * b.d };
+      case "-": return { n: a.n * b.d - b.n * a.d, d: a.d * b.d };
+      case "*": return { n: a.n * b.n, d: a.d * b.d };
+      default:
+        if (b.n === 0n) throw new Error("division by zero in \"" + expr + "\"");
+        return { n: a.n * b.d, d: a.d * b.n };
+    }
+  }
+
+  /* Everything wrong with one generated question, as a list of messages. */
+  function checkGenerated(q, optionCount) {
+    const out = [];
+    try {
+      if (!q || !q.id || !q.question || !q.category) return ["missing id, question or category"];
+      if (!Array.isArray(q.options) || q.options.length !== optionCount)
+        return ["has " + (q.options ? q.options.length : 0) + " options, format needs " + optionCount];
+      if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= optionCount)
+        return ["answer index out of range"];
+      if (new Set(q.options).size !== optionCount) out.push("two options read the same");
+      const c = q.check;
+      if (!c || !Array.isArray(c.options) || c.options.length !== optionCount)
+        return out.concat("no check record to re-mark it with");
+      const truth = evalCheck(c.expr);
+      const values = c.options.map(parseValue);
+      if (!same(values[q.answer], truth))
+        out.push(c.expr + " is not " + c.options[q.answer] + ", the keyed option");
+      if (values.filter(v => same(v, truth)).length !== 1)
+        out.push(c.expr + ": " + values.filter(v => same(v, truth)).length + " options are correct");
+      if (!same(parseValue(c.value), truth)) out.push(c.expr + ": stated value " + c.value + " is wrong");
+      // The page shows HTML; make sure it says what the check record says.
+      q.options.forEach((html, i) => {
+        const plain = String(html)
+          .replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, "$1/$2")
+          .replace(/\u2212/g, "-");
+        if (plain !== c.options[i]) out.push("option " + (i + 1) + " shows " + plain + " but is marked as " + c.options[i]);
+      });
+    } catch (e) {
+      out.push(e.message);
+    }
+    return out;
+  }
+
+  /* Make `papers` papers with a format's generator and re-mark every question. */
+  function checkGenerator(generator, format, papers) {
+    const issues = [];
+    let sampled = 0;
+    for (let p = 0; p < papers; p++) {
+      const paper = generator.make(format.questionCount);
+      if (paper.length !== format.questionCount)
+        issues.push("made " + paper.length + " questions, format needs " + format.questionCount);
+      if (new Set(paper.map(q => q.id)).size !== paper.length) issues.push("repeated a question id within a paper");
+      for (const q of paper) {
+        sampled++;
+        for (const message of checkGenerated(q, format.optionCount))
+          if (issues.length < 20) issues.push(message);
+      }
+    }
+    return { sampled, issues };
+  }
+
   /* ---- Whole-bank validation --------------------------------------------- */
 
   /* validate({ questions, formats, problems })
@@ -170,13 +257,19 @@ const QValidate = (function () {
        formats    array of test formats (used for option-count and eligibility)
        problems   registry load problems, e.g. QBank.problems() — duplicates are
                   dropped at load, so the registry is the only place that sees
-                  them                                                          */
+                  them
+       generators optional array of generators (QGenerators.all()). Given, every
+                  format that names one has `generatorPapers` papers (default 5)
+                  made and re-marked                                            */
   function validate(input) {
     const questions = (input && input.questions) || [];
     const formats = (input && input.formats) || [];
     const problems = (input && input.problems) || [];
 
-    const optionCounts = [...new Set(formats.map(f => f.optionCount))].sort((a, b) => a - b);
+    // Generated formats draw nothing from the bank, so their option count says
+    // nothing about which bank questions can appear in a paper.
+    const optionCounts = [...new Set(formats.filter(f => !f.generator)
+      .map(f => f.optionCount))].sort((a, b) => a - b);
     const ctx = { optionCounts };
 
     const issues = [];
@@ -208,7 +301,27 @@ const QValidate = (function () {
       issues.push(...checkQuestion(q, ctx));
     }
 
-    return { issues, summary: summarise(questions, formats, issues) };
+    const generated = [];
+    if (input && Array.isArray(input.generators)) {
+      const papers = input.generatorPapers || 5;
+      for (const f of formats) {
+        if (!f.generator) continue;
+        const g = input.generators.filter(x => x.id === f.generator)[0];
+        if (!g) {
+          issues.push({ severity: ERROR, id: f.id, field: "generator",
+            message: "names the generator \"" + f.generator + "\", which is not loaded" });
+          continue;
+        }
+        const r = checkGenerator(g, f, papers);
+        generated.push({ format: f.id, generator: g.id, sampled: r.sampled, failures: r.issues.length });
+        for (const message of r.issues)
+          issues.push({ severity: ERROR, id: f.id, field: "generated", message });
+      }
+    }
+
+    const summary = summarise(questions, formats, issues);
+    summary.generated = generated;
+    return { issues, summary };
   }
 
   function summarise(questions, formats, issues) {
@@ -230,6 +343,10 @@ const QValidate = (function () {
     }
 
     const eligibility = formats.map(f => {
+      // A generated format makes its own questions, so it is never short.
+      if (f.generator)
+        return { id: f.id, name: f.name, questionCount: f.questionCount,
+          eligible: 0, shortBy: 0, generated: true };
       const eligible = questions.filter(q => isEligibleFor(q, f));
       return {
         id: f.id,
@@ -255,13 +372,16 @@ const QValidate = (function () {
   /* Kept in step with QBank.ineligibleReason(); duplicated here only so the
      validator can run against a raw array with no registry loaded. */
   function isEligibleFor(q, format) {
-    return !!q && Array.isArray(q.options) &&
+    if (!q) return false;
+    if (Array.isArray(format.categories) && format.categories.indexOf(q.category) === -1) return false;
+    if (Array.isArray(format.excludeCategories) && format.excludeCategories.indexOf(q.category) !== -1) return false;
+    return Array.isArray(q.options) &&
       q.options.length === format.optionCount &&
       Number.isInteger(q.answer) &&
       q.answer >= 0 && q.answer < q.options.length;
   }
 
-  return { validate, scanDelimiters, ERROR, WARN };
+  return { validate, scanDelimiters, checkGenerated, checkGenerator, evalCheck, ERROR, WARN };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = { QValidate };

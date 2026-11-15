@@ -22,12 +22,18 @@
 <!-- Sandboxed storage key: Chrome shares localStorage across file:// pages, so
      without this the checks below would wipe real practice history. -->
 <script>window.QSTORE_KEY = "quant-practice:selftest";</script>
+<!-- A mustAnswer paper ignores an answer given within a quarter of a second of
+     the question appearing. The checks below click faster than that. -->
+<script>window.QTEST_NO_ANSWER_GUARD = true;</script>
 
 <script src="bank.js"></script>
 <script src="validate-core.js"></script>
 <script src="formats.js"></script>
+<script src="gen-arithmetic.js"></script>
 <script src="questions/questions.js"></script>
 <script src="questions/questions-maven.js"></script>
+<script src="questions/questions-flow-arithmetic.js"></script>
+<script src="questions/questions-flow-sequences.js"></script>
 <script src="store.js"></script>
 <script src="app.js"></script>
 <script src="view-practice.js"></script>
@@ -102,7 +108,41 @@ QFormats.add([
     marking: { correct: 1, incorrect: -1, skipped: 0 },
     navigation: "free", allowFlagging: true,
     categoryWeights: { "selftest-draw": 3 } },
+
+  /* The same seven-option pool, fenced by category both ways. */
+  { id: "selftest-allow", name: "Self test — allow-list", questionCount: 3,
+    timeLimitSec: 600, optionCount: 7,
+    marking: { correct: 1, incorrect: -1, skipped: 0 },
+    navigation: "free", allowFlagging: true, categories: ["selftest-draw"] },
+  { id: "selftest-block", name: "Self test — block-list", questionCount: 3,
+    timeLimitSec: 600, optionCount: 7,
+    marking: { correct: 1, incorrect: -1, skipped: 0 },
+    navigation: "free", allowFlagging: true, excludeCategories: ["selftest-draw"] },
+
+  /* A generated, answer-is-final paper, driven by the stub generator below. */
+  { id: "selftest-sprint", name: "Self test — sprint", questionCount: 4,
+    timeLimitSec: 600, optionCount: 4,
+    marking: { correct: 1, incorrect: -1, skipped: 0 },
+    navigation: "linear", mustAnswer: true, allowFlagging: false,
+    generator: "selftest-gen" },
 ]);
+
+/* A generator whose right answer is always the option reading 2. */
+QGenerators.add({
+  id: "selftest-gen",
+  name: "Self test generator",
+  make(count) {
+    const out = [];
+    for (let i = 1; i <= count; i++)
+      out.push({
+        id: "st-gen-" + i, category: "selftest-gen", breakdown: i % 2 ? "odd" : "even", time: 6,
+        generated: true, question: `Sprint ${i}: 1 + 1`, solution: `2`,
+        options: [`1`, `2`, `3`, `4`], answer: 1,
+        check: { expr: "1 + 1", value: "2", options: ["1", "2", "3", "4"] },
+      });
+    return out;
+  },
+});
 </script>
 
 <script>
@@ -216,6 +256,75 @@ function validatorTests() {
     { options: [`a`, `b`, `c`], answer: 0 }, { optionCount: 5 }), "has 3 options, format needs 5");
   check("eligibility passes a good question", QBank.ineligibleReason(
     { options: [`a`, `b`, `c`, `d`, `e`], answer: 4 }, { optionCount: 5 }), null);
+
+  // Fencing a format's pool by category.
+  const four = { category: "sequences", options: [`a`, `b`, `c`, `d`], answer: 0 };
+  check("allow-list admits a listed category",
+    QBank.isEligible(four, { optionCount: 4, categories: ["sequences"] }), true);
+  check("allow-list refuses any other category",
+    QBank.isEligible(four, { optionCount: 4, categories: ["logic"] }), false);
+  check("block-list refuses a listed category",
+    QBank.isEligible(four, { optionCount: 4, excludeCategories: ["sequences"] }), false);
+  check("block-list admits any other category",
+    QBank.isEligible(four, { optionCount: 4, excludeCategories: ["logic"] }), true);
+  check("allow-list format sees only its category",
+    QBank.eligible(QFormats.get("selftest-allow")).map(q => q.id), DRAW_ALL);
+  check("block-list format sees none of it",
+    QBank.eligible(QFormats.get("selftest-block")).length, 0);
+  check("a generated format draws nothing from the bank",
+    QBank.eligible(QFormats.get("flow-math")).length, 0);
+
+  // The real formats: Flow papers stay Flow, and nothing leaks the other way.
+  const seqPool = QBank.eligible(QFormats.get("flow-sequences"));
+  check("sequences paper can be filled", seqPool.length >= 26, true);
+  check("sequences paper draws only sequences", seqPool.every(q => q.category === "sequences"), true);
+  check("Maven paper draws no drill questions", QBank.eligible(QFormats.get("maven-oa"))
+    .some(q => q.category === "sequences" || q.category === "mental arithmetic"), false);
+}
+
+/* ==========================================================================
+   GENERATED PAPERS
+   ========================================================================== */
+
+function generatorTests() {
+  section("generated papers");
+  const g = QGenerators.get("arithmetic-sprint");
+  const f = QFormats.get("flow-math");
+  check("the Flow maths format names a loaded generator", !!g, true);
+
+  const paper = g.make(60);
+  check("a paper is 60 questions", paper.length, 60);
+  check("with 60 different ids", new Set(paper.map(q => q.id)).size, 60);
+  check("and 60 different sums", new Set(paper.map(q => q.check.expr)).size, 60);
+  check("four options each", paper.every(q => q.options.length === 4), true);
+  check("integers, decimals and fractions all appear",
+    ["integers", "decimals", "fractions"].every(c => paper.some(q => q.category === c)), true);
+
+  // Re-mark 30 whole papers with the validator's own evaluator.
+  const r = QValidate.checkGenerator(g, f, 30);
+  check("1800 generated questions re-marked", r.sampled, 1800);
+  check("every one keyed correctly, with exactly one right option", r.issues, []);
+
+  // The re-marker itself has to be able to fail.
+  check("re-marker evaluates a sum", (() => { const v = QValidate.evalCheck("(3/4) + 0.5"); return [String(v.n), String(v.d)]; })(), ["50", "40"]);
+  const wrongKey = Object.assign({}, paper[0], { answer: (paper[0].answer + 1) % 4 });
+  check("re-marker catches a wrong key", QValidate.checkGenerated(wrongKey, 4).length > 0, true);
+  const twoRight = JSON.parse(JSON.stringify(paper[1]));
+  twoRight.check.options[(twoRight.answer + 1) % 4] = twoRight.check.options[twoRight.answer];
+  check("re-marker catches two correct options", QValidate.checkGenerated(twoRight, 4).length > 0, true);
+  const mislabelled = JSON.parse(JSON.stringify(paper[2]));
+  mislabelled.options[0] = "999999";
+  check("re-marker catches an option that shows the wrong number",
+    QValidate.checkGenerated(mislabelled, 4).length > 0, true);
+
+  // The right answer must not favour a position among the sorted options.
+  const rank = [0, 0, 0, 0];
+  for (let i = 0; i < 40; i++) for (const q of g.make(60)) rank[q.answer]++;
+  check("right answer is not hiding in the middle", rank.every(n => n > 2400 * 0.19 && n < 2400 * 0.31), true);
+
+  const v = QValidate.validate({ questions: [], formats: [f], generators: [] });
+  check("a format naming a missing generator is an error",
+    v.issues.some(i => i.severity === "error" && i.field === "generator"), true);
 }
 
 /* ==========================================================================
@@ -308,6 +417,90 @@ function clickOption(text) {
     .filter(b => b.querySelector(".text").textContent === text)[0];
   if (!button) throw new Error("no option reading " + text);
   button.click();
+}
+
+/* An answer-is-final paper: the stub generator, then the real Flow format. */
+function sprintTests() {
+  section("answer-is-final papers");
+  QStore.reset();
+  const realConfirm = window.confirm;
+  window.confirm = () => true;
+
+  try {
+    QApp.go("test", { force: true });
+    const again = $("#again");
+    if (again) again.click();
+    check("generated format has a start button", !!$('[data-generate="selftest-sprint"]'), true);
+    check("the Flow maths test is offered", !!$('[data-generate="flow-math"]'), true);
+    check("the Flow sequences test is offered", !!$('[data-start="flow-sequences"]'), true);
+
+    $('[data-generate="selftest-sprint"]').click();
+    check("sprint starts on question 1", $(".controls").textContent.includes("Question 1 of 4"), true);
+    check("no previous, next, clear or flag", [$("#prev"), $("#next"), $("#clear"), $("#flag")], [null, null, null, null]);
+    check("no palette", $("#palette"), null);
+
+    key("ArrowRight"); key("n");
+    check("navigation keys cannot skip a question", $(".controls").textContent.includes("Question 1 of 4"), true);
+
+    clickOption("2");
+    check("answering moves straight on", $(".controls").textContent.includes("Question 2 of 4"), true);
+    key("ArrowLeft"); key("p"); key("0");
+    check("and there is no way back", $(".controls").textContent.includes("Question 2 of 4"), true);
+    check("nothing is pre-selected on the new question",
+      document.querySelectorAll('#options .option[aria-pressed="true"]').length, 0);
+
+    clickOption("1");
+    clickOption("2");
+    check("three answered, on the last question", $(".controls").textContent.includes("Question 4 of 4"), true);
+
+    $("#finish").click();                       // end early: question 4 never answered
+    check("ending early scores +1 +1 -1 and 0 for the unreached",
+      $("#view").textContent.includes("1 out of 4"), true);
+    check("results call it not reached", /1 not reached/.test($("#view").textContent), true);
+    check("results break the marks down by kind", $("#view").textContent.includes("Where the marks went"), true);
+    check("unreached questions are not listed", document.querySelectorAll("#view details").length, 3);
+
+    check("generated questions stay out of the question history", QStore.attempts().length, 0);
+    const t = QStore.tests()[0];
+    check("the paper itself is in the test history",
+      [t.formatId, t.score, t.max, t.generated, t.counts], ["selftest-sprint", 1, 4, true, { correct: 2, wrong: 1, skipped: 1 }]);
+
+    // Answering the last question hands the paper in by itself.
+    $("#again").click();
+    $('[data-generate="selftest-sprint"]').click();
+    for (let i = 0; i < 4; i++) clickOption("2");
+    check("the last answer submits the paper", $("#view").textContent.includes("4 out of 4"), true);
+
+    // The real thing: 60 sums, answered by keyboard.
+    $("#again").click();
+    $('[data-generate="flow-math"]').click();
+    check("Flow maths paper is 60 questions", $(".controls").textContent.includes("Question 1 of 60"), true);
+    check("each with four options", document.querySelectorAll("#options .option").length, 4);
+    check("the question is a sum", !!$("#qtext .sum"), true);
+    for (let i = 0; i < 60; i++) key(String(1 + (i % 4)));
+    const flow = QStore.tests()[QStore.tests().length - 1];
+    check("sixty answers end the paper", [flow.formatId, flow.items.length], ["flow-math", 60]);
+    check("score is right minus wrong", flow.score, flow.counts.correct - flow.counts.wrong);
+    check("every question was answered", flow.counts.correct + flow.counts.wrong, 60);
+    check("still nothing in the question history", QStore.attempts().length, 0);
+
+    // The sequences paper: bank-drawn, free navigation, 26 questions.
+    $("#again").click();
+    $('[data-start="flow-sequences"]').click();
+    check("sequences paper is 26 questions", $(".controls").textContent.includes("Question 1 of 26"), true);
+    check("sequences paper has four options", document.querySelectorAll("#options .option").length, 4);
+    check("sequences paper has a palette", document.querySelectorAll("#palette button").length, 26);
+    key("r");
+    $("#submit").click();
+    const seq = QStore.tests()[QStore.tests().length - 1];
+    check("sequences paper drew 26 different sequence questions",
+      [new Set(seq.items.map(i => i.qid)).size, seq.items.every(i => QBank.get(i.qid).category === "sequences")],
+      [26, true]);
+    check("bank-drawn paper does go into the question history", QStore.attempts().length, 26);
+  } finally {
+    window.confirm = realConfirm;
+    QStore.reset();
+  }
 }
 
 function testViewTests() {
@@ -515,14 +708,31 @@ function drawTests() {
   }
 }
 
+/* Runs last: a refused format is remembered as a load problem, and the Bank
+   view would then (rightly) stop reporting a clean bank. */
+function formatCheckTests() {
+  section("format checks");
+  check("malformed format fields are refused", (() => {
+    const before = QFormats.all().length;
+    QFormats.add([{ id: "bad-1", name: "x", questionCount: 1, timeLimitSec: 1, optionCount: 4,
+      marking: { correct: 1, incorrect: 0, skipped: 0 }, navigation: "free", mustAnswer: true }]);
+    QFormats.add([{ id: "bad-2", name: "x", questionCount: 1, timeLimitSec: 1, optionCount: 4,
+      marking: { correct: 1, incorrect: 0, skipped: 0 }, navigation: "free", categories: "sequences" }]);
+    return QFormats.all().length - before;
+  })(), 0);
+}
+
 window.addEventListener("load", () => {
   try {
     storeTests();
     validatorTests();
     practiceTests();
     testViewTests();
+    sprintTests();
     drawTests();
+    generatorTests();
     dashboardTests();
+    formatCheckTests();
   } catch (e) {
     failures++;
     log.push("\nTHREW  " + (e && e.stack ? e.stack : e));
