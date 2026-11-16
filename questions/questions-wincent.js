@@ -22,12 +22,11 @@
                   repeats the first, which is all Practice shows.
      shortAnswer  the bare answer, for marking yourself before the full solution.
 
-   The file is in two sets of eighteen problems, six at each level in each
-   set, so the mock has twelve problems to draw on for every block. Four
-   problems in the second set are argued, not calculated — the two about light
-   switches, the proof that the first player in the coin game cannot lose, and
-   the strategy for guessing higher or lower from one slip — and for those the
-   argument is the answer.
+   The file is in three sets of eighteen problems, six at each level in each
+   set, so the mock has eighteen problems to draw on for every block. A few
+   are argued, not calculated — logic puzzles such as the light switches, the
+   sand timers and the tigers, and proofs such as the coin game and the safe
+   with ten locks — and for those the argument is the answer.
 
    No options, so none of these can be drawn into a multiple-choice paper. All
    carry the tag "interview", which is how to pick them out in Practice.
@@ -2036,6 +2035,961 @@ QBank.add([
       and no wrong ones. A losing deal contains at most three wrong guesses.</p>
       <p>So if $W$ deals are won and $L$ are lost, $W \\le 3L$, and with $W + L = 8$ that means
       $W \\le 6$: <b>three-quarters is the most any plan can win</b>.</p>`,
+  },
+
+  /* ==== THIRD SET ========================================================= */
+
+  /* ---- Level 1 -------------------------------------------------------------- */
+
+  {
+    id: "sum-or-product",
+    category: "expected value",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Two dice are about to be rolled. You will be paid, in pounds, either their sum or
+      their product, and you must say which before the roll. Which do you choose, and what is it
+      worth?`,
+    hint: `The two dice are independent. What is the expected value of a product of two independent numbers?`,
+    hints: [
+      `The two dice are independent. What is the expected value of a product of two independent numbers?`,
+    ],
+    shortAnswer: `The product: £12.25, against £7 for the sum.`,
+    solution: `<p>The sum averages $3.5 + 3.5 = 7$. The dice are independent, so the product
+      averages $3.5 \\times 3.5 = 12.25$.</p>
+      <p>Take <b>the product, worth £12.25</b>.</p>`,
+    interview: {
+      level: 1,
+      followUp: "sum-or-product-after-the-roll",
+      twist: `Now you may choose after seeing the dice. How much more is the game worth?`,
+    },
+  },
+  {
+    id: "sum-or-product-after-the-roll",
+    category: "expected value",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Two dice are rolled and you are paid, in pounds, whichever is larger: their sum or
+      their product. What is the game worth?`,
+    hint: `The product alone is worth £12.25. For which rolls is the sum the bigger of the two?`,
+    hints: [
+      `The product alone is worth £12.25. For which rolls is the sum the bigger of the two?`,
+      `Only when a 1 is showing, and then by exactly 1. That is 11 of the 36 rolls.`,
+    ],
+    shortAnswer: `$\\frac{113}{9} \\approx$ £12.56 — about 31p more than always taking the product.`,
+    solution: `<p>With numbers $a$ and $b$, the sum beats the product only if one of them is a 1:
+      then the sum is $b + 1$ and the product $b$, a gain of exactly 1. (At double 2 the two are
+      equal.) Eleven of the 36 rolls contain a 1.</p>
+      <p>So the game is worth the product's $12.25$ plus $\\frac{11}{36}$:
+      $\\frac{441 + 11}{36} = \\frac{113}{9} \\approx$ <b>£12.56</b>.</p>`,
+  },
+
+  {
+    id: "jury-with-a-coin",
+    category: "probability",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A three-person jury decides by majority. Two of its members each reach the right
+      verdict with probability 0.8, independently; the third flips a coin. A one-person jury is a
+      single juror who is right with probability 0.8. Which jury is more likely to reach the
+      right verdict?`,
+    hint: `The coin only matters when the two serious jurors disagree.`,
+    hints: [
+      `The coin only matters when the two serious jurors disagree.`,
+      `Both right: 0.64. They disagree: 0.32, and then the coin sides with the right one half the time.`,
+    ],
+    shortAnswer: `Neither. Both are right 80% of the time.`,
+    solution: `<p>If the two serious jurors agree, the coin is outvoted. They are both right with
+      probability $0.8^2 = 0.64$. They disagree with probability $2 \\times 0.8 \\times 0.2 = 0.32$,
+      and then the coin picks the right side half the time: $0.16$.</p>
+      <p>$0.64 + 0.16 = 0.8$, <b>exactly the same</b> as the single juror. That is true whatever
+      the jurors' accuracy $p$: $p^2 + p(1 - p) = p$.</p>`,
+    interview: {
+      level: 1,
+      followUp: "three-serious-jurors",
+      twist: `The coin-flipper is replaced by a third juror as good as the other two. How often is
+      the jury right now?`,
+    },
+  },
+  {
+    id: "three-serious-jurors",
+    category: "probability",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A three-person jury decides by majority, and each member independently reaches the
+      right verdict with probability 0.8. How often is the jury right?`,
+    hint: `The jury is right when all three are right, or exactly two are.`,
+    hints: [
+      `The jury is right when all three are right, or exactly two are.`,
+      `All three: $0.8^3$. Exactly two: three ways, each $0.8 \\times 0.8 \\times 0.2$.`,
+    ],
+    shortAnswer: `89.6% of the time.`,
+    solution: `<p>All three right: $0.8^3 = 0.512$. Exactly two right: $3 \\times 0.8^2 \\times 0.2
+      = 0.384$.</p>
+      <p>$0.512 + 0.384 =$ <b>0.896</b>. Three independent 80% jurors beat one, where a jury of two
+      plus a coin-flipper only matched it.</p>`,
+  },
+
+  {
+    id: "fair-choice-from-a-biased-coin",
+    category: "probability",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You have one coin, and it is biased: it lands heads with some fixed probability
+      that you do not know. How can you use it to make a fair 50–50 choice? And if the coin in
+      fact lands heads one time in three, how many flips does your method take on average?`,
+    hint: `A single flip is biased. Is there a pair of outcomes from two flips that must be equally likely, whatever the bias?`,
+    hints: [
+      `A single flip is biased. Is there a pair of outcomes from two flips that must be equally likely, whatever the bias?`,
+      `Head-then-tail and tail-then-head each have probability $p(1 - p)$.`,
+    ],
+    shortAnswer: `Flip twice. Head–tail means one choice, tail–head the other, and two the same means start again. With a one-in-three coin that takes 4.5 flips on average.`,
+    solution: `<p>Flip the coin twice. Head-then-tail has probability $p(1 - p)$ and
+      tail-then-head has probability $(1 - p)p$: the same, whatever $p$ is. So let those two
+      outcomes stand for the two choices, and if both flips match, throw them away and repeat.</p>
+      <p>With $p = \\frac{1}{3}$ a pair settles it with probability $2 \\times \\frac{1}{3} \\times
+      \\frac{2}{3} = \\frac{4}{9}$, so you need $\\frac{9}{4}$ pairs on average:
+      <b>4.5 flips</b>.</p>`,
+    interview: {
+      level: 1,
+      followUp: "one-third-from-a-fair-coin",
+      twist: `Now the reverse. You have a fair coin and want something that happens with probability
+      exactly one-third. How, and how many flips does it take on average?`,
+    },
+  },
+  {
+    id: "one-third-from-a-fair-coin",
+    category: "probability",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Using only a fair coin, describe a way to produce an event that has probability
+      exactly $\\frac{1}{3}$, and find the average number of flips your method uses.`,
+    hint: `Find three equally likely outcomes and call one of them yes.`,
+    hints: [
+      `Find three equally likely outcomes and call one of them yes.`,
+      `Two flips give four equally likely outcomes. Throw one of them away.`,
+    ],
+    shortAnswer: `Flip twice: two heads means yes, one of each means no, two tails means start again. That is yes $\\frac{1}{3}$ of the time and takes $\\frac{8}{3}$ flips on average. (A sharper method needs only 2.)`,
+    solution: `<p>Flip twice. Call two heads “yes”, head–tail and tail–head “no”, and on two
+      tails start again. The three outcomes you keep are equally likely, so yes has probability
+      <b>$\\frac{1}{3}$</b>. A pair is kept with probability $\\frac{3}{4}$, so you need
+      $\\frac{4}{3}$ pairs on average: $\\frac{8}{3}$ flips.</p>
+      <p>A sharper method: flip until the first head, and say yes if it came on an even-numbered
+      flip. That has probability $\\frac{1}{4} + \\frac{1}{16} + \\frac{1}{64} + \\dots = \\frac{1}{3}$
+      and takes only 2 flips on average. Either answer is right; what matters is that the event
+      has probability exactly one-third and you can say how long it takes.</p>`,
+  },
+
+  {
+    id: "cars-in-twenty-minutes",
+    category: "probability",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `On a quiet road the chance of seeing at least one car in any 20-minute spell is
+      $\\frac{609}{625}$. Traffic is equally likely at all times, and what happens in one spell
+      tells you nothing about another. What is the chance of seeing at least one car in 5
+      minutes?`,
+    hint: `Work with the chance of seeing no car at all.`,
+    hints: [
+      `Work with the chance of seeing no car at all.`,
+      `No car in 20 minutes means no car in each of four separate 5-minute spells, and $1 - \\frac{609}{625} = \\frac{16}{625}$.`,
+    ],
+    shortAnswer: `$\\frac{3}{5}$.`,
+    solution: `<p>The chance of no car in 20 minutes is $1 - \\frac{609}{625} = \\frac{16}{625}$.
+      Twenty minutes is four independent 5-minute spells, so if $q$ is the chance of no car in 5
+      minutes, $q^4 = \\frac{16}{625}$ and $q = \\frac{2}{5}$.</p>
+      <p>The chance of at least one car in 5 minutes is $1 - \\frac{2}{5} =$
+      <b>$\\frac{3}{5}$</b>.</p>`,
+    interview: {
+      level: 1,
+      followUp: "cars-in-ten-minutes",
+      twist: `And in 10 minutes?`,
+    },
+  },
+  {
+    id: "cars-in-ten-minutes",
+    category: "probability",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `On a quiet road the chance of seeing at least one car in any 20-minute spell is
+      $\\frac{609}{625}$, with traffic equally likely at all times and separate spells independent.
+      What is the chance of seeing at least one car in 10 minutes?`,
+    hint: `No car in 20 minutes means no car in each of two separate 10-minute spells.`,
+    hints: [
+      `No car in 20 minutes means no car in each of two separate 10-minute spells.`,
+      `$\\frac{16}{625}$ is the square of the chance of no car in 10 minutes.`,
+    ],
+    shortAnswer: `$\\frac{21}{25}$.`,
+    solution: `<p>No car in 20 minutes has probability $\\frac{16}{625}$, which is the square of
+      the chance of no car in 10 minutes. That chance is therefore $\\frac{4}{25}$.</p>
+      <p>So at least one car in 10 minutes has probability $1 - \\frac{4}{25} =$
+      <b>$\\frac{21}{25}$</b>.</p>`,
+  },
+
+  {
+    id: "nine-minutes-from-two-timers",
+    category: "logic",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You have two sand timers: one runs for 4 minutes and the other for 7. How can you
+      time exactly 9 minutes?`,
+    hint: `Start both together. Which moments can you mark, as one or the other runs out?`,
+    hints: [
+      `Start both together. Which moments can you mark, as one or the other runs out?`,
+      `Turn each timer over when it runs out. At 8 minutes the 7-minute timer has been running for exactly one minute since you turned it. What if you turn it back?`,
+    ],
+    shortAnswer: `Start both. Turn the 4 over when it runs out, at 4 minutes, and the 7 over when it runs out, at 7. When the 4 runs out again, at 8, turn the 7 back over: it has one minute of sand to give back, and runs out at 9.`,
+    solution: `<p>Start both timers. At 4 minutes the small one runs out: turn it over. At 7 the
+      large one runs out: turn it over.</p>
+      <p>At 8 the small one runs out for the second time. The large one has been running for one
+      minute since it was turned, so one minute's worth of sand lies in its lower half. Turn it
+      back over and that sand runs through in one minute, finishing at <b>9 minutes</b>.</p>`,
+    interview: {
+      level: 1,
+      followUp: "ten-minutes-from-two-timers",
+      twist: `And exactly 10 minutes, with the same two timers?`,
+    },
+  },
+  {
+    id: "ten-minutes-from-two-timers",
+    category: "logic",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You have two sand timers: one runs for 4 minutes and the other for 7. How can you
+      time exactly 10 minutes?`,
+    hint: `10 is 7 and 3. Where can you find 3 minutes?`,
+    hints: [
+      `10 is 7 and 3. Where can you find 3 minutes?`,
+      `Start both and turn the 4 over when it runs out. When the 7 runs out, how long has the 4 been running?`,
+    ],
+    shortAnswer: `Start both and turn the 4 over at 4 minutes. When the 7 runs out, turn the 4 over again: it has been running for 3 minutes, gives those 3 minutes back, and runs out at 10.`,
+    solution: `<p>Start both timers and turn the small one over when it runs out at 4 minutes.
+      When the large one runs out at 7, the small one has been running for 3 minutes, so 3
+      minutes' worth of sand lies in its lower half.</p>
+      <p>Turn the small one over at that moment. The 3 minutes of sand run back through and it
+      empties at <b>10 minutes</b>.</p>`,
+  },
+
+  {
+    id: "sock-drawer-even-chance",
+    category: "probability",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A drawer holds red socks and blue socks, at least one of each. If you pull out two
+      at random, the chance that they match is exactly one half. What is the smallest number of
+      socks the drawer could hold?`,
+    hint: `Try the small cases: two socks, then three, then four.`,
+    hints: [
+      `Try the small cases: two socks, then three, then four.`,
+      `With three of one colour and one of the other, how many of the six possible pairs match?`,
+    ],
+    shortAnswer: `Four: three of one colour and one of the other.`,
+    solution: `<p>One of each: the pair never matches. Two and one: one matching pair out of
+      three. Two and two: two matching pairs out of six. Three and one: the three socks of one
+      colour make $\\binom{3}{2} = 3$ matching pairs out of $\\binom{4}{2} = 6$.</p>
+      <p>So the smallest drawer has <b>four socks</b>, split three and one.</p>`,
+    interview: {
+      level: 1,
+      followUp: "next-sock-drawer",
+      twist: `What is the next size of drawer for which the chance is exactly one half?`,
+    },
+  },
+  {
+    id: "next-sock-drawer",
+    category: "probability",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A drawer holds red and blue socks, and two pulled out at random match with
+      probability exactly one half. Three of one colour and one of the other is the smallest such
+      drawer. What is the next smallest?`,
+    hint: `With $r$ red and $b$ blue, there are $rb$ mixed pairs. They must be half of all $\\binom{r + b}{2}$ pairs.`,
+    hints: [
+      `With $r$ red and $b$ blue, there are $rb$ mixed pairs. They must be half of all $\\binom{r + b}{2}$ pairs.`,
+      `That condition simplifies to $(r - b)^2 = r + b$, so the total number of socks is a perfect square.`,
+    ],
+    shortAnswer: `Nine socks: six of one colour and three of the other. (Then sixteen, as ten and six: the total is always a perfect square.)`,
+    solution: `<p>Half the pairs must be mixed: $rb = \\frac{1}{2}\\binom{r + b}{2}$, that is
+      $4rb = (r + b)(r + b - 1)$, which rearranges to $(r - b)^2 = r + b$. So the total is a
+      perfect square, and the two colours differ by its square root.</p>
+      <p>A total of 4 gives 3 and 1. A total of 9 gives <b>6 and 3</b>: $15 + 3 = 18$ matching
+      pairs out of 36. After that comes 16, as 10 and 6.</p>`,
+  },
+
+  /* ---- Level 2 -------------------------------------------------------------- */
+
+  {
+    id: "two-wins-in-a-row",
+    category: "probability",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `To win a prize you must win two games in a row out of three, played alternately
+      against a strong opponent and a weak one. You beat the strong one 40% of the time and the
+      weak one 80%. You may choose the order: strong–weak–strong or weak–strong–weak. Which do
+      you choose, and what is your chance of the prize?`,
+    hint: `Whichever order you pick, there is one game you cannot afford to lose.`,
+    hints: [
+      `Whichever order you pick, there is one game you cannot afford to lose.`,
+      `You must win the middle game, and at least one of the other two.`,
+    ],
+    shortAnswer: `Strong–weak–strong: 51.2%, against 38.4% the other way round.`,
+    solution: `<p>Two wins in a row out of three always include the middle game. So you need the
+      middle game and at least one of the outer two.</p>
+      <p>Strong–weak–strong: $0.8 \\times (1 - 0.6^2) = 0.8 \\times 0.64 =$ <b>0.512</b>.<br>
+      Weak–strong–weak: $0.4 \\times (1 - 0.2^2) = 0.4 \\times 0.96 = 0.384$.</p>
+      <p>Play the strong opponent twice. It means more hard games, but the one game you must win
+      is the easy one, and you get two attempts at the hard one.</p>`,
+    interview: {
+      level: 2,
+      followUp: "any-two-of-three-games",
+      twist: `The rule changes: you now need to win any two of the three games, not two in a row.
+      Does your choice change?`,
+    },
+  },
+  {
+    id: "any-two-of-three-games",
+    category: "probability",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You play three games, alternately against a strong opponent whom you beat 40% of
+      the time and a weak one whom you beat 80% of the time, and win a prize if you win at least
+      two of the three. You may choose the order: strong–weak–strong or weak–strong–weak. Which
+      do you choose, and what is your chance?`,
+    hint: `No game is special any more. You simply want as many easy games as possible.`,
+    hints: [
+      `No game is special any more. You simply want as many easy games as possible.`,
+      `Weak–strong–weak: add up the chances of winning all three, and of each way of winning exactly two.`,
+    ],
+    shortAnswer: `Weak–strong–weak: 76.8%, against 54.4% the other way round.`,
+    solution: `<p>With no need for the wins to be consecutive, you want to meet the weak opponent
+      twice.</p>
+      <p>Weak–strong–weak: win both weak games, $0.8^2 = 0.64$; or win exactly one weak game and
+      the strong one, $2 \\times 0.8 \\times 0.2 \\times 0.4 = 0.128$. Total <b>0.768</b>.<br>
+      Strong–weak–strong: both strong games, $0.4^2 = 0.16$; or exactly one strong game and the
+      weak one, $2 \\times 0.4 \\times 0.6 \\times 0.8 = 0.384$. Total $0.544$.</p>`,
+  },
+
+  {
+    id: "last-ball-in-the-bag",
+    category: "logic",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A bag holds 20 blue balls and 13 red ones, and you have a pile of spare balls
+      beside it. You repeatedly take two balls out of the bag at random. If they are the same
+      colour you put one blue ball into the bag; if they are different you put one red ball in.
+      Each step leaves the bag one ball smaller. What colour is the last ball?`,
+    hint: `There are three kinds of step: two reds, two blues, one of each. Follow the number of red balls through each.`,
+    hints: [
+      `There are three kinds of step: two reds, two blues, one of each. Follow the number of red balls through each.`,
+      `The number of red balls in the bag either stays the same or goes down by two.`,
+    ],
+    shortAnswer: `Red, for certain.`,
+    solution: `<p>Two reds out, a blue in: the bag loses two reds. Two blues out, a blue in: the
+      reds are untouched. One of each out, a red in: the reds are untouched again.</p>
+      <p>So the number of red balls only ever changes by two, and it starts odd, at 13. It can
+      never reach zero, so when one ball is left it is <b>red</b> — whatever the luck of the
+      draws.</p>`,
+    interview: {
+      level: 2,
+      followUp: "last-ball-rule-reversed",
+      twist: `Swap the rule: two of the same colour puts a red ball in, two different puts a blue
+      ball in. Same starting bag. What can you say about the last ball now?`,
+    },
+  },
+  {
+    id: "last-ball-rule-reversed",
+    category: "logic",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A bag holds 20 blue balls and 13 red ones. You repeatedly take out two balls at
+      random: if they are the same colour you put one red ball into the bag from a spare pile, and
+      if they are different you put one blue ball in. What colour is the last ball left?`,
+    hint: `This time follow the number of blue balls through each of the three kinds of step.`,
+    hints: [
+      `This time follow the number of blue balls through each of the three kinds of step.`,
+      `Two blues out removes two blues. One of each out, a blue in: no change. Two reds out: no change.`,
+    ],
+    shortAnswer: `Red again — this time because the number of blue balls stays even.`,
+    solution: `<p>Two blues out, a red in: the bag loses two blues. Two reds out, a red in: the
+      blues are untouched. One of each out, a blue in: the blues are untouched.</p>
+      <p>The number of blue balls changes only by two and starts even, at 20, so it is never 1. A
+      single remaining ball therefore cannot be blue: it is <b>red</b>. Here the red count is no
+      help — it goes up and down by one — and the thing that never changes is the blue count's
+      parity.</p>`,
+  },
+
+  {
+    id: "an-ace-for-every-player",
+    category: "probability",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A standard deck is dealt out to four players, thirteen cards each. What is the
+      probability that every player has exactly one ace?`,
+    hint: `Place the aces one at a time. The first can go anywhere; where can the second go?`,
+    hints: [
+      `Place the aces one at a time. The first can go anywhere; where can the second go?`,
+      `After the first ace, 51 places remain and 39 of them are in other hands. Then 26 of 50, then 13 of 49.`,
+    ],
+    shortAnswer: `$\\frac{2197}{20825} \\approx 0.105$, a little over 10%.`,
+    solution: `<p>Think of the 52 places in the deal and drop the aces into them one by one. The
+      first ace can go anywhere. The second must avoid that player's hand: 39 of the remaining 51
+      places. The third must avoid two hands: 26 of 50. The fourth: 13 of 49.</p>
+      <p>$\\frac{39}{51} \\times \\frac{26}{50} \\times \\frac{13}{49} = \\frac{2197}{20825} \\approx$
+      <b>0.105</b>.</p>`,
+    interview: {
+      level: 2,
+      followUp: "all-four-aces-in-one-hand",
+      twist: `And the chance that one player holds all four aces?`,
+    },
+  },
+  {
+    id: "all-four-aces-in-one-hand",
+    category: "probability",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A standard deck is dealt out to four players, thirteen cards each. What is the
+      probability that one of the players holds all four aces?`,
+    hint: `Place the first ace anywhere. The other three must land in the same hand.`,
+    hints: [
+      `Place the first ace anywhere. The other three must land in the same hand.`,
+      `12 of the remaining 51 places, then 11 of 50, then 10 of 49.`,
+    ],
+    shortAnswer: `$\\frac{44}{4165} \\approx 0.011$, about 1 deal in 95.`,
+    solution: `<p>Wherever the first ace lands, its hand has 12 other places out of the 51
+      remaining. The second ace must take one of them, then the third one of 11 out of 50, then
+      the fourth one of 10 out of 49.</p>
+      <p>$\\frac{12}{51} \\times \\frac{11}{50} \\times \\frac{10}{49} = \\frac{44}{4165} \\approx$
+      <b>0.011</b>. There is no need to multiply by four: the first ace has already chosen the
+      player.</p>`,
+  },
+
+  {
+    id: "three-dice-make-a-triangle",
+    category: "combinatorics",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Three dice are rolled. What is the probability that the three numbers could be the
+      side lengths of a triangle — a real one, with some area?`,
+    hint: `Count the failures: rolls where the largest number is at least the sum of the other two.`,
+    hints: [
+      `Count the failures: rolls where the largest number is at least the sum of the other two.`,
+      `Sort the failures by their largest number. With largest 2 the only failure is 1, 1, 2. With largest 3: 1, 1, 3 and 1, 2, 3.`,
+      `Counting orders, the failures number 3, 9, 18, 30 and 45 for a largest number of 2, 3, 4, 5 and 6.`,
+    ],
+    shortAnswer: `$\\frac{37}{72} \\approx 0.51$.`,
+    solution: `<p>Three lengths make a triangle when the largest is less than the sum of the
+      other two. It is easier to count the rolls that fail.</p>
+      <p>With largest number 2 the failing sets are $\\{1, 1, 2\\}$: 3 orders. Largest 3:
+      $\\{1, 1, 3\\}, \\{1, 2, 3\\}$: $3 + 6 = 9$. Largest 4: four sets, 18 orders. Largest 5: six
+      sets, 30 orders. Largest 6: nine sets, 45 orders. Total $3 + 9 + 18 + 30 + 45 = 105$.</p>
+      <p>So $216 - 105 = 111$ rolls work, and the probability is $\\frac{111}{216} =$
+      <b>$\\frac{37}{72}$</b>, just over a half.</p>`,
+    interview: {
+      level: 2,
+      followUp: "three-dice-right-angle",
+      twist: `And the probability that they could be the sides of a right-angled triangle?`,
+    },
+  },
+  {
+    id: "three-dice-right-angle",
+    category: "combinatorics",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Three dice are rolled. What is the probability that the three numbers could be the
+      side lengths of a right-angled triangle?`,
+    hint: `Which sets of whole numbers from 1 to 6 satisfy $a^2 + b^2 = c^2$?`,
+    hints: [
+      `Which sets of whole numbers from 1 to 6 satisfy $a^2 + b^2 = c^2$?`,
+      `Only 3, 4, 5. In how many orders can the dice show it?`,
+    ],
+    shortAnswer: `$\\frac{1}{36}$.`,
+    solution: `<p>The squares available are 1, 4, 9, 16, 25, 36, and the only two that add up to
+      a third are $9 + 16 = 25$. So the dice must show 3, 4 and 5.</p>
+      <p>That can happen in $3! = 6$ orders out of 216: <b>$\\frac{1}{36}$</b>.</p>`,
+  },
+
+  {
+    id: "hundred-tigers-one-sheep",
+    category: "logic",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A hundred tigers and one sheep are put on an island with nothing else to eat. Any
+      tiger may eat the sheep, but a tiger that does so turns into a sheep itself, and can then be
+      eaten in turn. Every tiger is perfectly logical, would like to eat, but values its own
+      survival above a meal. Is the sheep eaten?`,
+    hint: `Start with one tiger, then two, then three.`,
+    hints: [
+      `Start with one tiger, then two, then three.`,
+      `With two tigers, whichever eats becomes a sheep on an island with one tiger.`,
+    ],
+    shortAnswer: `No. With an even number of tigers nobody dares to eat; with an odd number one tiger eats and is then safe.`,
+    solution: `<p>One tiger: it eats, and nothing is left to threaten it. Two tigers: whichever
+      eats becomes a sheep facing a single tiger, and would be eaten, so neither does. Three
+      tigers: one can eat safely, because that leaves two tigers and a sheep, where nobody eats.</p>
+      <p>The pattern alternates: the sheep is eaten exactly when the number of tigers is odd,
+      because eating is safe exactly when it leaves an even number behind. A hundred is even, so
+      <b>the sheep is not eaten</b>.</p>`,
+    interview: {
+      level: 2,
+      followUp: "one-more-tiger",
+      twist: `A hundred-and-first tiger swims over to the island. What happens now?`,
+    },
+  },
+  {
+    id: "one-more-tiger",
+    category: "logic",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A hundred and one tigers and one sheep are on an island with nothing else to eat.
+      A tiger that eats the sheep turns into a sheep itself and can be eaten in turn. Every tiger
+      is perfectly logical, would like to eat, but values survival above a meal. What happens?`,
+    hint: `Work up from one tiger: when is it safe to eat?`,
+    hints: [
+      `Work up from one tiger: when is it safe to eat?`,
+      `Eating is safe when it leaves an even number of tigers behind.`,
+    ],
+    shortAnswer: `One tiger eats the sheep at once and becomes a sheep. That leaves 100 tigers and one sheep, and nobody eats again.`,
+    solution: `<p>With one tiger the sheep is eaten; with two it is not, because the eater would
+      become prey; with three it is, because the eater is left among two tigers who dare not
+      touch it. The sheep is eaten exactly when the number of tigers is odd.</p>
+      <p>With 101, <b>one tiger eats</b> — whichever gets there first — and turns into a sheep.
+      The island then holds 100 tigers and a sheep, an even number, and it stays that way.</p>`,
+  },
+
+  {
+    id: "one-six-two-sixes-three-sixes",
+    category: "probability",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Which is most likely: at least one six when 6 dice are rolled, at least two sixes
+      when 12 are rolled, or at least three sixes when 18 are rolled?`,
+    hint: `In each case you are asking for the average number of sixes or more. So averages will not separate them; you have to calculate.`,
+    hints: [
+      `In each case you are asking for the average number of sixes or more. So averages will not separate them; you have to calculate.`,
+      `The first is $1 - \\left(\\frac{5}{6}\\right)^6$. The second is $1 - \\left(\\frac{5}{6}\\right)^{12} - 12 \\times \\frac{1}{6} \\times \\left(\\frac{5}{6}\\right)^{11}$.`,
+      `$\\left(\\frac{5}{6}\\right)^6 \\approx 0.335$.`,
+    ],
+    shortAnswer: `At least one six with 6 dice: about 0.665, against 0.619 for two in 12 and 0.597 for three in 18.`,
+    solution: `<p>One six in 6 dice: $1 - \\left(\\frac{5}{6}\\right)^6 \\approx 1 - 0.335 = 0.665$.</p>
+      <p>Two in 12: take away the chances of none and of exactly one.
+      $\\left(\\frac{5}{6}\\right)^{12} \\approx 0.112$ and $12 \\times \\frac{1}{6} \\times
+      \\left(\\frac{5}{6}\\right)^{11} \\approx 0.269$, leaving $0.619$. Three in 18 works out at
+      $0.597$.</p>
+      <p>So <b>one six in 6 dice</b> is the most likely. Each asks for the average or better, and
+      with few dice the count of sixes is lopsided: it cannot fall far below its average but can
+      go well above, which pushes “average or better” past a half.</p>`,
+    interview: {
+      level: 2,
+      followUp: "the-average-number-of-sixes-or-more",
+      twist: `Carry the pattern on: at least $n$ sixes when $6n$ dice are rolled. What does the
+      probability tend to as $n$ grows?`,
+    },
+  },
+  {
+    id: "the-average-number-of-sixes-or-more",
+    category: "probability",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You roll $6n$ dice and ask for at least $n$ sixes — the average number, or more.
+      For $n = 1$ the probability is about 0.665. What does it tend to as $n$ becomes large, and
+      why?`,
+    hint: `For large $n$, what shape does the distribution of the number of sixes take?`,
+    hints: [
+      `For large $n$, what shape does the distribution of the number of sixes take?`,
+      `It becomes symmetric about its average, which is $n$.`,
+    ],
+    shortAnswer: `One half. With many dice the number of sixes is spread symmetrically about its average, so “the average or more” becomes an even chance. It comes down towards a half from above: 0.665, 0.619, 0.597, …`,
+    solution: `<p>The number of sixes has average $n$, and for large $n$ its distribution is close
+      to a normal curve centred there. Half of a symmetric curve lies at or above its centre, so
+      the probability tends to <b>$\\frac{1}{2}$</b>.</p>
+      <p>It approaches from above — 0.665, 0.619, 0.597 and so on — because for small $n$ the
+      count is skewed, with its bulk sitting at or just above the average and a long thin tail
+      beyond.</p>`,
+  },
+
+  /* ---- Level 3 -------------------------------------------------------------- */
+
+  {
+    id: "best-place-in-the-birthday-queue",
+    category: "probability",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A cinema gives a free ticket to the first person in its queue whose birthday is
+      the same as that of someone ahead of them. Birthdays are equally likely to be any of 365
+      days. Which place in the queue gives you the best chance of the free ticket?`,
+    hint: `To win in place $n$, the $n - 1$ people ahead of you must all have different birthdays, and yours must match one of them.`,
+    hints: [
+      `To win in place $n$, the $n - 1$ people ahead of you must all have different birthdays, and yours must match one of them.`,
+      `Compare place $n + 1$ with place $n$. The ratio of the two chances is $\\frac{366 - n}{365} \\times \\frac{n}{n - 1}$.`,
+      `That ratio is above 1 exactly while $n^2 - n < 365$.`,
+    ],
+    shortAnswer: `20th. Your chance there is about 3.2%.`,
+    solution: `<p>In place $n$ you win if the $n - 1$ people ahead all differ and you match one of
+      them: $P(n) = \\frac{365}{365} \\cdot \\frac{364}{365} \\cdots \\frac{367 - n}{365} \\times
+      \\frac{n - 1}{365}$.</p>
+      <p>Moving back one place multiplies this by $\\frac{366 - n}{365} \\times \\frac{n}{n - 1}$.
+      That is more than 1 when $(366 - n)\\,n > 365\\,(n - 1)$, which simplifies to
+      $n^2 - n < 365$. It holds up to $n = 19$ (342) and fails at $n = 20$ (380).</p>
+      <p>So the chance rises as far as place 20 and falls after it: stand <b>20th</b>, where it
+      is about 3.2%.</p>`,
+    interview: {
+      level: 3,
+      followUp: "best-place-in-the-birth-month-queue",
+      twist: `Suppose the offer were for a shared birth month instead, with twelve equally likely
+      months. Where would you stand?`,
+    },
+  },
+  {
+    id: "best-place-in-the-birth-month-queue",
+    category: "probability",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A cinema gives a free ticket to the first person in its queue who was born in the
+      same month as someone ahead of them. The twelve months are equally likely. Which place in
+      the queue gives the best chance of the free ticket?`,
+    hint: `In place $n$ you need the $n - 1$ people ahead to have different months and yours to match one. Compare place $n + 1$ with place $n$.`,
+    hints: [
+      `In place $n$ you need the $n - 1$ people ahead to have different months and yours to match one. Compare place $n + 1$ with place $n$.`,
+      `The ratio is $\\frac{13 - n}{12} \\times \\frac{n}{n - 1}$, which is above 1 while $n^2 - n < 12$.`,
+    ],
+    shortAnswer: `Fourth or fifth: the two are exactly equal, at $\\frac{55}{288} \\approx 19\\%$.`,
+    solution: `<p>Moving from place $n$ to place $n + 1$ multiplies your chance by
+      $\\frac{13 - n}{12} \\times \\frac{n}{n - 1}$, which is above 1 while $n^2 - n < 12$ and
+      exactly 1 when $n^2 - n = 12$, that is at $n = 4$.</p>
+      <p>So the chance rises to place 4, is the same in place 5, and falls after that:
+      <b>fourth or fifth</b>, each with probability $\\frac{12 \\cdot 11 \\cdot 10}{12^3} \\times
+      \\frac{3}{12} = \\frac{55}{288} \\approx 0.19$.</p>`,
+  },
+
+  {
+    id: "red-sweets-run-out-first",
+    category: "probability",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A jar holds 10 red, 20 blue and 30 green sweets, and you take them out one at a
+      time at random. What is the probability that the red sweets are the first colour to run out
+      — that when the last red is taken, at least one blue and at least one green are still in
+      the jar?`,
+    hint: `Think about the very last sweet out of the jar, and then about which of the other two colours finishes later.`,
+    hints: [
+      `Think about the very last sweet out of the jar, and then about which of the other two colours finishes later.`,
+      `Red runs out first if the last sweet of all is green and the blues outlast the reds, or the last of all is blue and the greens outlast the reds.`,
+      `The last sweet is green with probability $\\frac{30}{60}$. Leaving the greens aside, the last of the red and blue sweets is blue with probability $\\frac{20}{30}$.`,
+    ],
+    shortAnswer: `$\\frac{7}{12}$.`,
+    solution: `<p>Look at it from the end. The colour that runs out last is the colour of the
+      final sweet. Red runs out first in two ways.</p>
+      <p>The final sweet is green, probability $\\frac{30}{60}$, and among the red and blue sweets
+      alone the last one is blue, probability $\\frac{20}{30}$: together $\\frac{1}{3}$.<br>
+      Or the final sweet is blue, probability $\\frac{20}{60}$, and among the red and green sweets
+      the last is green, probability $\\frac{30}{40}$: together $\\frac{1}{4}$.</p>
+      <p>$\\frac{1}{3} + \\frac{1}{4} =$ <b>$\\frac{7}{12}$</b>. The two steps multiply because where
+      the greens fall says nothing about the order of the reds and blues among themselves.</p>`,
+    interview: {
+      level: 3,
+      followUp: "sweets-left-when-the-reds-run-out",
+      twist: `When the last red sweet comes out, how many sweets do you expect to be left in the
+      jar?`,
+    },
+  },
+  {
+    id: "sweets-left-when-the-reds-run-out",
+    category: "expected value",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A jar holds 10 red, 20 blue and 30 green sweets, taken out one at a time at
+      random. At the moment the last red sweet is taken, how many sweets do you expect to be left
+      in the jar?`,
+    hint: `Take one particular blue or green sweet. What is the chance that it is still in the jar when the last red comes out?`,
+    hints: [
+      `Take one particular blue or green sweet. What is the chance that it is still in the jar when the last red comes out?`,
+      `Among that sweet and the ten reds, it has to be the last of the eleven.`,
+    ],
+    shortAnswer: `$\\frac{50}{11} \\approx 4.5$.`,
+    solution: `<p>A given blue or green sweet is still in the jar exactly when it comes out after
+      all ten reds. Among those eleven sweets every order is equally likely, so it is last with
+      probability $\\frac{1}{11}$.</p>
+      <p>There are 50 sweets that are not red, and expected values add:
+      $50 \\times \\frac{1}{11} =$ <b>$\\frac{50}{11}$</b>, about 4.5.</p>`,
+  },
+
+  {
+    id: "five-scientists-one-safe",
+    category: "combinatorics",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Five scientists keep their work in a safe with several locks. They want any three
+      of them to be able to open it together, but no two of them. A lock may have any number of
+      keys. What is the smallest number of locks they need, and how many keys must each scientist
+      carry?`,
+    hint: `Take any two scientists. There must be at least one lock that neither of them can open.`,
+    hints: [
+      `Take any two scientists. There must be at least one lock that neither of them can open.`,
+      `Can two different pairs be stopped by the same lock? Think about what happens when those two pairs get together.`,
+    ],
+    shortAnswer: `10 locks, and 6 keys each.`,
+    solution: `<p>Every pair of scientists must be stopped by some lock that neither can open.
+      Two different pairs cannot share that lock: together they are at least three people, who
+      must be able to open everything. So there is a separate lock for each pair, at least
+      $\\binom{5}{2} = 10$.</p>
+      <p>Ten is enough: make one lock for each pair and give its key to the other three. Any three
+      scientists include someone outside each pair, so they open every lock; any two are stopped
+      by their own lock.</p>
+      <p>Each scientist holds the keys for the pairs they are not in: $\\binom{4}{2} = 6$. So
+      <b>10 locks and 6 keys each</b>.</p>`,
+    interview: {
+      level: 3,
+      followUp: "eleven-pirates-one-chest",
+      twist: `Eleven pirates want the same for their treasure chest: any six can open it, but no
+      five. How many locks, and how many keys each?`,
+    },
+  },
+  {
+    id: "eleven-pirates-one-chest",
+    category: "combinatorics",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Eleven pirates lock their treasure in a chest with several locks, arranged so
+      that any six of them can open it together but no five can. What is the smallest number of
+      locks, and how many keys does each pirate carry?`,
+    hint: `Every group of five must be stopped by a lock none of them can open, and no two groups of five can share that lock.`,
+    hints: [
+      `Every group of five must be stopped by a lock none of them can open, and no two groups of five can share that lock.`,
+      `One lock for each group of five, with keys for the other six pirates.`,
+    ],
+    shortAnswer: `462 locks, and 252 keys each.`,
+    solution: `<p>Each group of five pirates needs a lock that none of the five can open. Two
+      different groups of five together contain at least six pirates, who must open everything, so
+      no lock can serve two groups. That makes $\\binom{11}{5} =$ <b>462 locks</b>, each with keys
+      held by the six pirates outside its group.</p>
+      <p>A pirate holds a key for every group of five that leaves them out:
+      $\\binom{10}{5} =$ <b>252 keys</b>.</p>`,
+  },
+
+  {
+    id: "hedging-a-best-of-five",
+    category: "market making",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Two teams play a best-of-five series. You want to back one of them so that you
+      finish exactly £100 up if it wins the series and exactly £100 down if it loses. But you can
+      only bet on single games, one at a time, at even money, choosing each stake as you go. How
+      much do you bet on the first game?`,
+    hint: `Work backwards from two games all, where the last game decides everything and you must be level going into it.`,
+    hints: [
+      `Work backwards from two games all, where the last game decides everything and you must be level going into it.`,
+      `Write down what you need to be holding at each score. At any score it is the average of the two scores that can follow, and your stake is half the gap between them.`,
+      `At 2–2 you hold nothing and stake £100. At 2–1 up you must hold £50 and stake £50. At 2–0 up you must hold £75.`,
+    ],
+    shortAnswer: `£37.50.`,
+    solution: `<p>Let $N$ be what you must be holding at each score. At the end $N$ is $+100$ or
+      $-100$. Before that, a stake $s$ must take you from $N$ to the right amount either way, so
+      $N$ is the average of the two amounts that can follow and $s$ is half their difference.</p>
+      <p>At 2–2: $N = 0$, stake 100. At 2–1: $N = \\frac{100 + 0}{2} = 50$. At 2–0:
+      $N = \\frac{100 + 50}{2} = 75$. At 1–1: $N = 0$ by symmetry. At 1–0:
+      $N = \\frac{75 + 0}{2} = 37.5$, and at 0–1 it is $-37.5$.</p>
+      <p>So the first stake is $\\frac{37.5 - (-37.5)}{2} =$ <b>£37.50</b>. You are rebuilding a
+      bet on the whole series out of bets on its games.</p>`,
+    interview: {
+      level: 3,
+      followUp: "hedging-a-best-of-seven",
+      twist: `And for a best-of-seven series?`,
+    },
+  },
+  {
+    id: "hedging-a-best-of-seven",
+    category: "market making",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Two teams play a best-of-seven series. You want to finish exactly £100 up if your
+      team wins the series and exactly £100 down if it loses, but you can only bet on single
+      games, one at a time, at even money. How much do you bet on the first game?`,
+    hint: `What you must hold at any score is £100 times (the chance of winning the series from there minus the chance of losing it), treating every game as a coin flip.`,
+    hints: [
+      `What you must hold at any score is £100 times (the chance of winning the series from there minus the chance of losing it), treating every game as a coin flip.`,
+      `After winning the first game, a team wins a best-of-seven between equals with probability $\\frac{42}{64}$.`,
+    ],
+    shortAnswer: `£31.25.`,
+    solution: `<p>Work backwards as for a shorter series: what you must hold at any score is the
+      average of what you must hold after a win and after a loss. That makes it
+      $100 \\times (2p - 1)$, where $p$ is the chance of winning the series from that score if
+      every game were a coin flip.</p>
+      <p>One game up, a team needs 3 more wins before 4 losses: $p = \\frac{42}{64}$, so you must
+      hold $100 \\times \\frac{20}{64} = 31.25$. One game down you must hold $-31.25$. The first
+      stake is half the gap: <b>£31.25</b>.</p>
+      <p>In general the first stake is £100 times the chance that the remaining games would split
+      evenly: $\\binom{6}{3} / 2^6 = \\frac{20}{64}$ here, and $\\binom{4}{2} / 2^4 = \\frac{6}{16}$,
+      or £37.50, for a best of five.</p>`,
+  },
+
+  {
+    id: "shorter-piece-over-longer",
+    category: "expected value",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A stick is snapped at a uniformly random point. What is the expected value of the
+      ratio of the shorter piece to the longer piece?`,
+    hint: `Call the shorter piece $x$. It is uniform between 0 and $\\frac{1}{2}$, and the ratio is $\\frac{x}{1 - x}$.`,
+    hints: [
+      `Call the shorter piece $x$. It is uniform between 0 and $\\frac{1}{2}$, and the ratio is $\\frac{x}{1 - x}$.`,
+      `$\\frac{x}{1 - x} = \\frac{1}{1 - x} - 1$, which is easy to integrate.`,
+    ],
+    shortAnswer: `$2\\ln 2 - 1 \\approx 0.39$.`,
+    solution: `<p>The shorter piece $x$ is uniform on $\\left[0, \\frac{1}{2}\\right]$, with density
+      2, and the ratio is $\\frac{x}{1 - x} = \\frac{1}{1 - x} - 1$.</p>
+      <p>$E = 2\\int_0^{1/2} \\left(\\frac{1}{1 - x} - 1\\right) dx = 2\\left(\\ln 2 - \\frac{1}{2}\\right)
+      = 2\\ln 2 - 1 \\approx$ <b>0.39</b>.</p>
+      <p>This is not the ratio of the two average lengths, $\\frac{1/4}{3/4} = \\frac{1}{3}$: the
+      average of a ratio is not the ratio of the averages.</p>`,
+    interview: {
+      level: 3,
+      followUp: "longer-piece-over-shorter",
+      twist: `And the other way up: the expected ratio of the longer piece to the shorter?`,
+    },
+  },
+  {
+    id: "longer-piece-over-shorter",
+    category: "expected value",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A stick is snapped at a uniformly random point. What is the expected value of the
+      ratio of the longer piece to the shorter piece?`,
+    hint: `Write the integral down before you try to evaluate it.`,
+    hints: [
+      `Write the integral down before you try to evaluate it.`,
+      `With the shorter piece $x$ uniform on $\\left[0, \\frac{1}{2}\\right]$, the ratio is $\\frac{1 - x}{x}$. How does that behave near $x = 0$?`,
+    ],
+    shortAnswer: `It is infinite. Breaks very near an end give huge ratios often enough that the average does not exist.`,
+    solution: `<p>With the shorter piece $x$ uniform on $\\left[0, \\frac{1}{2}\\right]$, the ratio is
+      $\\frac{1 - x}{x}$, and its expected value is $2\\int_0^{1/2} \\frac{1 - x}{x}\\,dx$.</p>
+      <p>Near $x = 0$ the integrand behaves like $\\frac{1}{x}$, whose integral grows without limit
+      (like $\\ln\\frac{1}{x}$). So the expected value is <b>infinite</b>.</p>
+      <p>The typical ratio is modest — the median is 3 — but one break in a thousand lands within
+      a two-thousandth of an end and gives a ratio above 1999, and such breaks carry the average
+      away. The shorter-to-longer ratio, by contrast, is at most 1 and averages
+      $2\\ln 2 - 1 \\approx 0.39$.</p>`,
+  },
+
+  {
+    id: "token-round-a-pentagon",
+    category: "expected value",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A token sits on one corner of a pentagon. At each step it moves to one of the two
+      neighbouring corners, with equal probability. What is the expected number of steps until it
+      has visited all five corners?`,
+    hint: `The corners visited so far always form an unbroken arc, and just after reaching a new corner the token is at one end of it.`,
+    hints: [
+      `The corners visited so far always form an unbroken arc, and just after reaching a new corner the token is at one end of it.`,
+      `A fair walk that starts $a$ steps from one barrier and $b$ from another takes $a \\times b$ steps on average to reach one of them.`,
+      `With $k$ corners visited and the token at an end, a new corner is 1 step one way and $k$ steps the other. So the answer is $1 + 2 + 3 + 4$.`,
+    ],
+    shortAnswer: `10 steps.`,
+    solution: `<p>The visited corners form an arc. Just after a new corner is reached, the token
+      is at one end of an arc of $k$ corners: an unvisited corner is 1 step away in one direction
+      and $k$ steps away in the other.</p>
+      <p>A fair walk that starts $a$ steps from one barrier and $b$ from another reaches a barrier
+      after $a \\times b$ steps on average. So getting from $k$ visited corners to $k + 1$ takes
+      $1 \\times k$ steps.</p>
+      <p>Adding up for $k = 1, 2, 3, 4$: $1 + 2 + 3 + 4 =$ <b>10 steps</b>.</p>`,
+    interview: {
+      level: 3,
+      followUp: "pentagon-to-a-far-corner",
+      twist: `How long, on average, until it first reaches one particular corner that is not next to
+      where it started?`,
+    },
+  },
+  {
+    id: "pentagon-to-a-far-corner",
+    category: "expected value",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `A token sits on one corner of a pentagon and at each step moves to one of the two
+      neighbouring corners with equal probability. Pick one of the two corners that are not next
+      to its starting point. What is the expected number of steps until the token first reaches
+      it?`,
+    hint: `Cut the pentagon open at the target corner. The token is now on a line with the target at both ends.`,
+    hints: [
+      `Cut the pentagon open at the target corner. The token is now on a line with the target at both ends.`,
+      `It starts 2 steps from one end and 3 from the other. A fair walk reaches an end after the product of the two distances, on average.`,
+    ],
+    shortAnswer: `6 steps.`,
+    solution: `<p>Going one way round, the target is 2 steps away; going the other way it is 3.
+      Cut the pentagon at the target and lay it flat: the token is on a line, 2 steps from one end
+      and 3 from the other, and it stops when it reaches either.</p>
+      <p>A fair walk starting $a$ from one end and $b$ from the other takes $a \\times b$ steps on
+      average, so the answer is $2 \\times 3 =$ <b>6 steps</b>. (A neighbouring corner would take
+      $1 \\times 4 = 4$.)</p>`,
   },
 
 ]);
