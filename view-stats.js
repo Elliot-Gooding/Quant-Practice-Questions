@@ -6,7 +6,7 @@
    Deliberately no charting library and no new palette. Every figure is a table
    row carrying its own number, with a single-hue proportion bar beside it as a
    secondary read — so nothing here depends on colour alone, and the page stays
-   in the app's existing navy and serif.
+   in the app's existing navy and plain sans-serif.
 
    The one chart is the score-per-sitting line for each paper: a single series,
    drawn in SVG by hand, whose every point is also a row of the Test history
