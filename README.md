@@ -240,10 +240,10 @@ Not published by Wincent, so decided here: one problem and one follow-up per
 block; only the opening problem gates the next block; a problem solved after
 clues still counts. Change `formats.js` if your interviewer says otherwise.
 
-The problems are in `questions/questions-wincent.js`: 54 pairs, eighteen at each
+The problems are in `questions/questions-wincent.js`: 60 pairs, twenty at each
 level. They are written in the style of the interview and are not a record of
 what Wincent asks; two are modelled on problems candidates have reported. All
-108 questions are also ordinary free-response questions in Practice — filter by
+120 questions are also ordinary free-response questions in Practice — filter by
 the tag `interview` to work through them — and none can be drawn into a
 multiple-choice paper. A mock takes problems you have not attempted first, so
 practising them one by one uses up fresh material for the mock.
@@ -331,7 +331,7 @@ view-test.js         │ one file per tab; each registers itself with QApp
 view-interview.js    │ the mock interview, run inside the Test tab
 view-stats.js        │
 view-bank.js         ┘
-questions/           the bank, 597 questions, one file per kind:
+questions/           the bank, 609 questions, one file per kind:
                        questions.js                  130 probability, free response
                        questions-maven.js            61 five-option questions, Maven style
                        questions-quant-oa.js         123 more five-option questions across
@@ -340,8 +340,8 @@ questions/           the bank, 597 questions, one file per kind:
                                                      counting and market making
                        questions-flow-arithmetic.js  127 mental-arithmetic techniques
                        questions-flow-sequences.js   48 worked number series
-                       questions-wincent.js          108 free-response interview problems:
-                                                     54 opening problems, each with a follow-up
+                       questions-wincent.js          120 free-response interview problems:
+                                                     60 opening problems, each with a follow-up
 tests.html           open it in a browser; it runs ~250 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.
