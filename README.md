@@ -8,7 +8,7 @@ Four tabs:
 | | |
 |---|---|
 | **Practice** | one question at a time, at random, in order, or only what you got wrong |
-| **Test** | a timed mock paper under a firm's assessment format |
+| **Test** | a timed mock paper under a firm's assessment format, or a mock interview |
 | **Stats** | what your history adds up to, a score trend for each paper, plus export/import/reset |
 | **Bank** | the health of the question bank and what still needs writing |
 
@@ -34,8 +34,8 @@ QBank.add([
     solution: `text`,
 
     // All optional. With options + answer the question becomes multiple
-    // choice and can appear in a test; without them it stays free-response
-    // and is silently skipped by test mode.
+    // choice and can appear in a paper; without them it stays free-response
+    // and the multiple-choice papers skip it.
     options: [`a`, `b`, `c`, `d`, `e`],
     answer: 2,                // 0-based index into options
     tags: ["bayes", "symmetry"],
@@ -145,7 +145,7 @@ not read, an answer within a quarter of a second of the question appearing is
 ignored.
 
 `questions-flow-arithmetic.js` is the companion to that paper, for the Practice
-tab: 80 questions, each one a different mental-arithmetic technique, with the
+tab: 127 questions, each one a different mental-arithmetic technique, with the
 hint naming the shortcut and the solution working it. Learn the moves there,
 drill them on the generated paper.
 
@@ -166,16 +166,10 @@ given new numbers every time. Three things hold for every generated series:
 Easier families come first and harder ones last. That ordering is a choice made
 here; the real paper's order is not published.
 
-`questions-flow-sequences.js` is the Practice-tab companion: 30 worked series,
+`questions-flow-sequences.js` is the Practice-tab companion: 48 worked series,
 each with a different rule, a hint and a solution. The timed paper does not draw
-on it.
-
-Each has a second set (`questions-flow-arithmetic-2.js`, 47 techniques;
-`questions-flow-sequences-2.js`, 18 series). Nothing in a second set is a
-first-set question with new numbers: the arithmetic adds shortcuts the first set
-does not cover, and the series use rules that appear neither in the first set
-nor among the generated paper's families — rules on digits, on positions, or on
-more than one earlier term.
+on it. The last 18 use rules that are not among the generated paper's families
+either — rules on digits, on positions, or on more than one earlier term.
 
 ### Tracking the timed papers
 
@@ -221,8 +215,7 @@ Not published by Wincent, so decided here: one problem and one follow-up per
 block; only the opening problem gates the next block; a problem solved after
 clues still counts. Change `formats.js` if your interviewer says otherwise.
 
-The problems are in `questions/questions-wincent.js` and
-`questions/questions-wincent-2.js`: 36 pairs between them, twelve at each
+The problems are in `questions/questions-wincent.js`: 36 pairs, twelve at each
 level. They are written in the style of the interview and are not a record of
 what Wincent asks; two are modelled on problems candidates have reported. All
 72 questions are also ordinary free-response questions in Practice — filter by
@@ -313,21 +306,17 @@ view-test.js         │ one file per tab; each registers itself with QApp
 view-interview.js    │ the mock interview, run inside the Test tab
 view-stats.js        │
 view-bank.js         ┘
-questions/           the bank, one file per batch:
+questions/           the bank, 561 questions, one file per kind:
                        questions.js                  130 probability, free response
                        questions-maven.js            61 five-option questions, Maven style
                        questions-quant-oa.js         123 more five-option questions across
                                                      probability, expected value, conditional
                                                      probability, logic, number sense,
                                                      counting and market making
-                       questions-flow-arithmetic.js  80 mental-arithmetic techniques
-                       questions-flow-sequences.js   30 worked number series
-                       questions-flow-arithmetic-2.js  47 more techniques, none repeated
-                       questions-flow-sequences-2.js   18 more series, on rules the first
-                                                       set and the generated paper do not use
-                       questions-wincent.js          36 free-response interview problems:
-                                                     18 opening problems, each with a follow-up
-                       questions-wincent-2.js        36 more, in the same shape
+                       questions-flow-arithmetic.js  127 mental-arithmetic techniques
+                       questions-flow-sequences.js   48 worked number series
+                       questions-wincent.js          72 free-response interview problems:
+                                                     36 opening problems, each with a follow-up
 tests.html           open it in a browser; it runs ~250 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.

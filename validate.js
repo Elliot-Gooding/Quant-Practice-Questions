@@ -52,13 +52,14 @@ function bankFiles() {
     .map(f => path.join(QUESTIONS_DIR, f));
 }
 
+const banks = bankFiles();
 const files = [
   path.join(ROOT, "bank.js"),
   path.join(ROOT, "validate-core.js"),
   path.join(ROOT, "formats.js"),
   path.join(ROOT, "gen-arithmetic.js"),
   path.join(ROOT, "gen-sequences.js"),
-  ...bankFiles(),
+  ...banks,
 ];
 
 for (const f of files) if (!fs.existsSync(f)) die("missing " + path.relative(ROOT, f));
@@ -152,7 +153,7 @@ function printIssues(label, list, colour) {
 }
 
 console.log(c.bold("\nQuant practice — bank validation"));
-console.log(c.dim(files.length - 5 + " bank file(s), " + questions.length + " questions, " +
+console.log(c.dim(banks.length + " bank file(s), " + questions.length + " questions, " +
   formats.length + " test format(s)"));
 
 printIssues("ERRORS", errors, c.red);
@@ -193,7 +194,7 @@ for (const e of s.eligibility) {
 if (s.generated && s.generated.length) {
   console.log(c.bold("\nGenerated papers, re-marked"));
   for (const g of s.generated)
-    console.log("  " + pad(g.format, 16) + pad(g.sampled + " questions", 18) +
+    console.log("  " + pad(g.format, 19) + pad(g.sampled + " questions", 18) +
       (g.failures ? c.red(g.failures + " wrong") : c.green("all correct")));
 }
 
