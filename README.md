@@ -170,6 +170,13 @@ here; the real paper's order is not published.
 each with a different rule, a hint and a solution. The timed paper does not draw
 on it.
 
+Each has a second set (`questions-flow-arithmetic-2.js`, 47 techniques;
+`questions-flow-sequences-2.js`, 18 series). Nothing in a second set is a
+first-set question with new numbers: the arithmetic adds shortcuts the first set
+does not cover, and the series use rules that appear neither in the first set
+nor among the generated paper's families — rules on digits, on positions, or on
+more than one earlier term.
+
 ### Tracking the timed papers
 
 Each paper you have sat gets a panel on the Stats tab: the score at every
@@ -314,6 +321,9 @@ questions/           the bank, one file per batch:
                                                      counting and market making
                        questions-flow-arithmetic.js  80 mental-arithmetic techniques
                        questions-flow-sequences.js   30 worked number series
+                       questions-flow-arithmetic-2.js  47 more techniques, none repeated
+                       questions-flow-sequences-2.js   18 more series, on rules the first
+                                                       set and the generated paper do not use
                        questions-wincent.js          36 free-response interview problems:
                                                      18 opening problems, each with a follow-up
 tests.html           open it in a browser; it runs ~250 self checks and says
