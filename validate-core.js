@@ -169,7 +169,8 @@ const QValidate = (function () {
      they are re-marked here instead. Each one carries check = { expr, value,
      options } in plain text; this evaluates expr from scratch — its own parser,
      its own BigInt fractions, sharing no code with the generator — and insists
-     that the keyed option is the true value and that no other option is.      */
+     that the keyed option is the true value and that no other option is.
+     Sequence questions are re-marked the same way, further down.              */
 
   function parseValue(text) {
     const m = /^(-?)(\d+)(?:\.(\d+))?(?:\/(\d+))?$/.exec(String(text).trim());
@@ -199,6 +200,160 @@ const QValidate = (function () {
     }
   }
 
+  /* ---- Re-marking generated sequences ----------------------------------------
+
+     A sequence question carries check = { kind: "sequence", rule: { family,
+     params }, terms, value, options }. Each family is written out again here,
+     term by term on BigInt fractions, from nothing but its parameters. The
+     terms the generator showed and the answer it keyed must both come out of
+     this second implementation, or the question is reported.                 */
+
+  const num = v => parseValue(String(v));
+  const whole = v => ({ n: BigInt(v), d: 1n });
+  const qadd = (x, y) => ({ n: x.n * y.d + y.n * x.d, d: x.d * y.d });
+  const qmul = (x, y) => ({ n: x.n * y.n, d: x.d * y.d });
+  function qdiv(x, y) {
+    if (y.n === 0n) throw new Error("a sequence rule divided by zero");
+    return { n: x.n * y.d, d: x.d * y.n };
+  }
+  function asInteger(x) {
+    if (x.n % x.d !== 0n) throw new Error("a sequence rule expected a whole number");
+    return x.n / x.d;
+  }
+
+  function isPrime(k) {
+    if (k < 2) return false;
+    for (let f = 2; f * f <= k; f++) if (k % f === 0) return false;
+    return true;
+  }
+  function nthPrime(index) {                    // nthPrime(0) is 2
+    let found = -1, k = 1;
+    while (found < index) { k++; if (isPrime(k)) found++; }
+    return k;
+  }
+
+  /* grow(seed, count, next): next(t, i) gives term i from the terms before it. */
+  function grow(seed, count, next) {
+    const t = seed.slice();
+    for (let i = t.length; i < count; i++) t.push(next(t, i));
+    return t.slice(0, count);
+  }
+  const track = (trk, j) => trk.kind === "mul"
+    ? qmul(num(trk.a), whole(BigInt(trk.step) ** BigInt(j)))
+    : qadd(num(trk.a), qmul(num(trk.step), whole(j)));
+  const digitsOf = x => String(asInteger(x) < 0n ? -asInteger(x) : asInteger(x));
+
+  const SEQUENCE_RULES = {
+    arithmetic: (p, k) => grow([num(p.a)], k, t => qadd(t[t.length - 1], num(p.d))),
+    quadratic: (p, k) => grow([num(p.a)], k, (t, i) =>
+      qadd(t[i - 1], qadd(num(p.d), qmul(num(p.c), whole(i - 1))))),
+    primeGaps: (p, k) => grow([num(p.a)], k, (t, i) => qadd(t[i - 1], whole(p.s * nthPrime(p.j + i - 1)))),
+    squareGaps: (p, k) => grow([num(p.a)], k, (t, i) => qadd(t[i - 1], whole(p.s * (p.j + i - 1) * (p.j + i - 1)))),
+    geometric: (p, k) => grow([num(p.a)], k, t => qmul(t[t.length - 1], num(p.r))),
+    affine: (p, k) => grow([num(p.a)], k, t => qadd(qmul(num(p.m), t[t.length - 1]), num(p.c))),
+    growingMul: (p, k) => grow([num(p.a)], k, (t, i) =>
+      p.dir === "div" ? qdiv(t[i - 1], whole(p.k + i - 1)) : qmul(t[i - 1], whole(p.k + i - 1))),
+    doublePlusIndex: (p, k) => grow([num(p.a)], k, (t, i) =>
+      qadd(qmul(num(p.m), t[i - 1]), qmul(num(p.c), whole(i)))),
+    sumTwo: (p, k) => grow([num(p.a), num(p.b)], k, (t, i) => qadd(t[i - 1], t[i - 2])),
+    sumThree: (p, k) => grow([num(p.a), num(p.b), num(p.c)], k, (t, i) => qadd(qadd(t[i - 1], t[i - 2]), t[i - 3])),
+    productTwo: (p, k) => grow([num(p.a), num(p.b)], k, (t, i) => qmul(t[i - 1], t[i - 2])),
+    sumAll: (p, k) => grow([num(p.a), num(p.b)], k, t => t.reduce(qadd, whole(0))),
+    secondOrder: (p, k) => grow([num(p.a), num(p.b)], k, (t, i) =>
+      qadd(qmul(num(p.p), t[i - 1]), qmul(num(p.q), t[i - 2]))),
+    squareRecurrence: (p, k) => grow([num(p.a)], k, (t, i) => qadd(qmul(t[i - 1], t[i - 1]), num(p.c))),
+    interleaved: (p, k) => grow([], k, (t, i) => track(i % 2 === 0 ? p.x : p.y, Math.floor(i / 2))),
+    alternating: (p, k) => grow([num(p.a)], k, (t, i) => {
+      const op = p.ops[(i - 1) % 2];
+      return qadd(qmul(whole(op[0]), t[i - 1]), whole(op[1]));
+    }),
+    addMulGrowing: (p, k) => grow([num(p.a)], k, (t, i) => {
+      const by = whole(p.k0 + i - 1);
+      const adding = ((i - 1) % 2 === 0) === (p.first === "add");
+      return adding ? qadd(t[i - 1], by) : qmul(t[i - 1], by);
+    }),
+    fractionTracks: (p, k) => grow([], k, (t, i) => qdiv(
+      qadd(num(p.num.a), qmul(num(p.num.d), whole(i))), track(p.den, i))),
+    conditional: (p, k) => grow([num(p.a)], k, (t, i) => {
+      const v = asInteger(t[i - 1]);
+      return v % 2n === 0n ? whole(v / 2n) : qadd(qmul(num(p.m), whole(v)), num(p.c));
+    }),
+    power: (p, k) => grow([], k, (t, i) => {
+      const base = BigInt(i + 1 + p.s) ** BigInt(p.k);
+      const sign = p.alt ? BigInt(p.sign) * (i % 2 === 0 ? 1n : -1n) : 1n;
+      return qadd(whole(sign * base), num(p.c));
+    }),
+    primeForm: (p, k) => grow([], k, (t, i) => {
+      const q = BigInt(nthPrime(p.j + i));
+      return whole(p.form === "square" ? q * q : p.form === "timesIndex" ? BigInt(i + 1) * q : 2n * q);
+    }),
+    expForm: (p, k) => grow([], k, (t, i) => {
+      const pos = BigInt(i + 1);
+      return p.form === "times"
+        ? whole(pos * 2n ** (pos - BigInt(p.e)))
+        : whole(BigInt(p.b) ** pos + BigInt(p.s) * pos);
+    }),
+    rotation: (p, k) => {
+      const out = [String(p.digits)];
+      while (out.length < k) {
+        const s = out[out.length - 1];
+        out.push(p.by === "left" ? s.substring(1) + s.charAt(0) : s.charAt(s.length - 1) + s.substring(0, s.length - 1));
+      }
+      return out.slice(0, k).map(num);
+    },
+    baseCount: (p, k) => grow([], k, (t, i) => {
+      let v = p.start + i, s = "";
+      while (v > 0) { s = (v % p.base) + s; v = Math.floor(v / p.base); }
+      return num(s);
+    }),
+    digitSum: (p, k) => grow([num(p.a)], k, (t, i) => {
+      let sum = 0n;
+      for (const ch of digitsOf(t[i - 1])) sum += BigInt(ch);
+      return qadd(t[i - 1], whole(sum));
+    }),
+    reverseAdd: (p, k) => grow([num(p.a)], k, (t, i) => {
+      if (i % 2 === 0) return qadd(t[i - 1], num(p.k));
+      let back = "";
+      for (const ch of digitsOf(t[i - 1])) back = ch + back;
+      return num(back);
+    }),
+    lookSay: (p, k) => {
+      const out = [String(p.seed)];
+      while (out.length < k) {
+        const s = out[out.length - 1];
+        let next = "", count = 1;
+        for (let i = 1; i <= s.length; i++) {
+          if (i < s.length && s[i] === s[i - 1]) { count++; continue; }
+          next += count + s[i - 1];
+          count = 1;
+        }
+        out.push(next);
+      }
+      return out.slice(0, k).map(num);
+    },
+  };
+
+  /* The true next term of a sequence question, after checking the shown terms. */
+  function remarkSequence(c, out) {
+    const rule = c.rule && SEQUENCE_RULES[c.rule.family];
+    if (!rule) throw new Error("unknown sequence family \"" + (c.rule && c.rule.family) + "\"");
+    if (!Array.isArray(c.terms) || c.terms.length < 3) throw new Error("a sequence needs at least three shown terms");
+    const terms = rule(c.rule.params, c.terms.length + 1);
+    c.terms.forEach((shown, i) => {
+      if (!same(parseValue(shown), terms[i]))
+        out.push(c.rule.family + ": term " + (i + 1) + " is shown as " + shown + " but the rule gives something else");
+    });
+    return terms[c.terms.length];
+  }
+
+  /* What a piece of generated HTML says, as the plain text a check record uses. */
+  function plainOf(html) {
+    return String(html)
+      .replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, "$1/$2")
+      .replace(/\u2212/g, "-")
+      .replace(/\u202f/g, "");
+  }
+
   /* Everything wrong with one generated question, as a list of messages. */
   function checkGenerated(q, optionCount) {
     const out = [];
@@ -212,20 +367,27 @@ const QValidate = (function () {
       const c = q.check;
       if (!c || !Array.isArray(c.options) || c.options.length !== optionCount)
         return out.concat("no check record to re-mark it with");
-      const truth = evalCheck(c.expr);
+      const series = c.kind === "sequence";
+      const label = series ? "series " + (c.terms || []).join(", ") : c.expr;
+      const truth = series ? remarkSequence(c, out) : evalCheck(c.expr);
       const values = c.options.map(parseValue);
       if (!same(values[q.answer], truth))
-        out.push(c.expr + " is not " + c.options[q.answer] + ", the keyed option");
+        out.push(label + " is not " + c.options[q.answer] + ", the keyed option");
       if (values.filter(v => same(v, truth)).length !== 1)
-        out.push(c.expr + ": " + values.filter(v => same(v, truth)).length + " options are correct");
-      if (!same(parseValue(c.value), truth)) out.push(c.expr + ": stated value " + c.value + " is wrong");
+        out.push(label + ": " + values.filter(v => same(v, truth)).length + " options are correct");
+      if (!same(parseValue(c.value), truth)) out.push(label + ": stated value " + c.value + " is wrong");
       // The page shows HTML; make sure it says what the check record says.
       q.options.forEach((html, i) => {
-        const plain = String(html)
-          .replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, "$1/$2")
-          .replace(/\u2212/g, "-");
+        const plain = plainOf(html);
         if (plain !== c.options[i]) out.push("option " + (i + 1) + " shows " + plain + " but is marked as " + c.options[i]);
       });
+      if (series) {
+        const shown = [];
+        plainOf(q.question).replace(/<span class="term">([^<]*)<\/span>/g, (m, term) => { shown.push(term); return m; });
+        if (shown.join(" | ") !== c.terms.join(" | "))
+          out.push(label + ": the question shows " + shown.join(", ") + " instead");
+        if (c.options.some(o => c.terms.indexOf(o) !== -1)) out.push(label + ": an option repeats a shown term");
+      }
     } catch (e) {
       out.push(e.message);
     }
@@ -381,7 +543,8 @@ const QValidate = (function () {
       q.answer >= 0 && q.answer < q.options.length;
   }
 
-  return { validate, scanDelimiters, checkGenerated, checkGenerator, evalCheck, ERROR, WARN };
+  return { validate, scanDelimiters, checkGenerated, checkGenerator, evalCheck,
+    sequenceFamilies: () => Object.keys(SEQUENCE_RULES), ERROR, WARN };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = { QValidate };

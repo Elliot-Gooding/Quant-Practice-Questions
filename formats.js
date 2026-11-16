@@ -110,12 +110,13 @@ QFormats.add([
     marking: { correct: 1, incorrect: -1, skipped: 0 },
     navigation: "free",
     allowFlagging: true,
-    categories: ["sequences"],
+    generator: "number-series",
     note: `26 number series in 25 minutes: find the rule, pick the next term.
       Free navigation, so bank the quick ones and come back. A wrong answer
       costs a mark and a skip costs nothing — leave it blank unless you have
       found a rule that fits every term. Pen and paper are allowed, a
-      calculator is not. Four options is an assumption; the host does not say.`,
+      calculator is not. Easier series come first here; the real order is not
+      published. Four options is an assumption; the host does not say.`,
   },
 
   /* ------------------------------------------------------------------------

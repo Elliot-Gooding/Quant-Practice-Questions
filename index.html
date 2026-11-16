@@ -22,6 +22,8 @@
     --good: #6fd08c;
     --bad: #ff7a7a;
     --warn: #e6b450;
+    --series: #5a94ee;      /* the one chart line: a step of the accent that sits
+                               in the readable lightness band on the panel */
     --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
     --sans: -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
@@ -141,11 +143,40 @@
   .frac span:first-child { border-bottom: 1px solid currentColor; padding: 0 .25em; }
   .frac span:last-child { padding: 0 .25em; }
   .sum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* A generated number series: big enough to study, and free to wrap. */
+  .seq { font-size: 28px; line-height: 1.6; margin-top: .5rem; font-variant-numeric: tabular-nums; }
+  .seq .term { white-space: nowrap; }
+  .seq .next { color: var(--accent); }
+  details .seq { font-size: 20px; }
   /* A sprint question is one sum: make it the biggest thing on the page. */
   .sprint #qtext { font-size: 34px; text-align: center; padding: .75rem 0 .25rem; }
   .sprint .options { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
   .sprint .options li { margin-top: 0; }
   .sprint .option { font-size: 22px; padding: .8rem .9rem; align-items: center; }
+
+  /* Score-per-sitting line on the Stats tab. One series, so no legend: the
+     panel heading says what is plotted, and every point is a row of the Test
+     history table. Grid and axis text stay recessive; only the line is loud. */
+  .chart { position: relative; margin: .5rem 0 1rem; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .grid { stroke: var(--panel-edge); stroke-width: 1; }
+  .chart .zero { stroke: var(--muted); stroke-width: 1; }
+  .chart .line { fill: none; stroke: var(--series); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart .dot { fill: var(--series); stroke: var(--panel); stroke-width: 2; }
+  .chart .dot.on { stroke: var(--ink); }
+  .chart .hit { fill: transparent; cursor: default; outline: none; }
+  .chart .tick { fill: var(--muted); font-family: var(--sans); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .chart .endlabel { fill: var(--ink); font-family: var(--sans); font-size: 12px; font-weight: 600; }
+  .chart .tip {
+    position: absolute; transform: translate(12px, -50%); pointer-events: none; z-index: 2;
+    background: var(--bg); border: 1px solid var(--panel-edge); border-radius: 6px; padding: .4rem .6rem;
+    font-family: var(--sans); font-size: 12px; color: var(--muted); white-space: nowrap;
+  }
+  .chart .tip.flip { transform: translate(calc(-100% - 12px), -50%); }
+  .chart .tip b { display: block; color: var(--ink); font-size: 14px; }
+  .chart .tip span { display: block; }
+  table.kinds td.barcell { width: 22%; }
+  .paper h2:first-child { margin-top: 0; }
 
   /* Hint / solution unfold beneath the question */
   .reveal { display: none; border-top: 1px solid var(--panel-edge); margin-top: 1.75rem; padding-top: 1.5rem; }
@@ -268,6 +299,7 @@
 <script src="validate-core.js"></script>
 <script src="formats.js"></script>
 <script src="gen-arithmetic.js"></script>
+<script src="gen-sequences.js"></script>
 <script src="questions/questions.js"></script>
 <script src="questions/questions-maven.js"></script>
 <script src="questions/questions-flow-arithmetic.js"></script>

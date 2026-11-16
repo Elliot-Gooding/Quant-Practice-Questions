@@ -5,10 +5,15 @@
    rule, pick the next term. Four options (assumed), +1 right, -1 wrong, 0 for a
    skip, free navigation.
 
-   This is a starter set: enough for the "Flow Traders sequences test" paper on
-   the Test tab, and deliberately no more. Every question uses a different rule
-   — there are no two that differ only in their numbers. A fuller sequences
-   section is planned separately.
+   These thirty are for the Practice tab: worked examples, one per kind of rule,
+   each with a hint that points at the idea and a solution that walks through
+   it. Every question uses a different rule — no two differ only in their
+   numbers.
+
+   The timed paper on the Test tab ("Flow Traders sequences test") does not draw
+   on this file. It is generated fresh every sitting by gen-sequences.js, from
+   27 rule families with new numbers each time, so it cannot be memorised.
+   Learn to spot the rules here; practise finding them cold there.
 
    Each sequence was generated from its rule by machine, and the answer is the
    rule's next term, so the terms shown and the key cannot disagree.

@@ -7,6 +7,11 @@
    row carrying its own number, with a single-hue proportion bar beside it as a
    secondary read — so nothing here depends on colour alone, and the page stays
    in the app's existing navy and serif.
+
+   The one chart is the score-per-sitting line for each paper: a single series,
+   drawn in SVG by hand, whose every point is also a row of the Test history
+   table further down. Beside it sits a table of the last few sittings broken
+   down by kind of question, which is where "what is costing me marks" shows.
    ========================================================================== */
 
 QApp.register((function () {
@@ -56,6 +61,205 @@ QApp.register((function () {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
+  }
+
+  /* ---- Papers over time --------------------------------------------------------- */
+
+  const RECENT = 5;          // "lately" means the last five sittings of a paper
+  const PLOTTED = 40;        // at most this many sittings on the line
+  const ENOUGH = 5;          // answers needed before a kind is named weakest or slowest
+
+  /* What a stored paper item counts as. Papers sat before kinds were recorded
+     fall back to the question's category. */
+  function kindOf(item) {
+    if (item.kind) return item.kind;
+    const q = QBank.get(item.qid);
+    return q ? q.category : "(unknown)";
+  }
+
+  /* Sittings grouped by paper, oldest first inside a group, the paper sat most
+     recently first. */
+  function byPaper(tests) {
+    const groups = new Map();
+    for (const t of tests.slice().sort((a, b) => a.startedAt - b.startedAt)) {
+      if (!groups.has(t.formatId)) groups.set(t.formatId, []);
+      groups.get(t.formatId).push(t);
+    }
+    return [...groups.values()].sort((a, b) => b[b.length - 1].startedAt - a[a.length - 1].startedAt);
+  }
+
+  function tally(sittings) {
+    const kinds = new Map();
+    for (const t of sittings) for (const item of t.items || []) {
+      if (item.outcome !== "correct" && item.outcome !== "wrong") continue;
+      const kind = kindOf(item);
+      const g = kinds.get(kind) || { n: 0, correct: 0, ms: 0 };
+      g.n++;
+      if (item.outcome === "correct") g.correct++;
+      g.ms += item.timeMs || 0;
+      kinds.set(kind, g);
+    }
+    return kinds;
+  }
+
+  const blankWord = t => (QFormats.get(t.formatId) || {}).mustAnswer ? "not reached" : "skipped";
+  const one = x => (Math.round(x * 10) / 10).toFixed(1);
+
+  /* Round axis steps: 1, 2, 5, 10, 20, 50 ... at most five ticks. */
+  function ticksFor(lo, hi) {
+    const raw = (hi - lo) / 4 || 1;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 5, 10].map(m => m * pow).filter(s => s >= raw)[0];
+    const out = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(Math.round(v * 1000) / 1000);
+    return out;
+  }
+
+  /* The score line for one paper. Raw marks when every sitting was out of the
+     same total; otherwise (shortened papers) the percentage of the marks. */
+  function scoreChart(sittings) {
+    const shown = sittings.slice(-PLOTTED);
+    const offset = sittings.length - shown.length;
+    const sameMax = shown.every(t => t.max === shown[0].max);
+    const value = t => sameMax ? t.score : (t.max ? 100 * t.score / t.max : 0);
+    const top = sameMax ? shown[0].max : 100;
+    const values = shown.map(value);
+    const step = ticksFor(0, top)[1] || top;
+    const low = Math.min(0, Math.floor(Math.min(...values) / step) * step);
+
+    const W = 640, H = 190, L = 40, Rm = 60, T = 14, B = 28;
+    const x = i => shown.length === 1 ? (L + W - Rm) / 2 : L + i * (W - L - Rm) / (shown.length - 1);
+    const y = v => T + (top - v) * (H - T - B) / (top - low);
+    const pt = (v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1);
+
+    const grid = ticksFor(low, top).map(v => `
+      <line class="${v === 0 && low < 0 ? "zero" : "grid"}" x1="${L}" x2="${W - Rm}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>
+      <text class="tick" x="${L - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${v}${sameMax ? "" : "%"}</text>`).join("");
+
+    const dots = shown.length > 30 ? [shown.length - 1] : shown.map((t, i) => i);
+    const marks = dots.map(i => `<circle class="dot" data-i="${i}" cx="${x(i).toFixed(1)}" cy="${y(values[i]).toFixed(1)}" r="4"/>`).join("");
+    const hits = shown.map((t, i) => {
+      const when = new Date(t.startedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+      const tip = `${t.counts.correct} right, ${t.counts.wrong} wrong, ${t.counts.skipped} ${blankWord(t)}`;
+      return `<circle class="hit" tabindex="0" data-i="${i}" data-score="${t.score} / ${t.max}"
+        data-when="Sitting ${offset + i + 1} &middot; ${QApp.escapeHtml(when)}" data-detail="${tip}"
+        data-x="${(100 * x(i) / W).toFixed(2)}" data-y="${(100 * y(values[i]) / H).toFixed(2)}"
+        cx="${x(i).toFixed(1)}" cy="${y(values[i]).toFixed(1)}" r="13"/>`;
+    }).join("");
+
+    const last = shown.length - 1;
+    const endLabel = sameMax ? String(shown[last].score) : Math.round(values[last]) + "%";
+    return `
+      <div class="chart">
+        <svg viewBox="0 0 ${W} ${H}" role="img"
+             aria-label="Score at each sitting, ${shown.length} sittings, latest ${shown[last].score} out of ${shown[last].max}. Every value is in the Test history table below.">
+          ${grid}
+          ${shown.length > 1 ? `<polyline class="line" points="${values.map(pt).join(" ")}"/>` : ""}
+          ${marks}
+          <text class="endlabel" x="${(x(last) + 10).toFixed(1)}" y="${(y(values[last]) + 4).toFixed(1)}">${endLabel}</text>
+          <text class="tick" x="${L}" y="${H - 8}">sitting ${offset + 1}</text>
+          ${shown.length > 1 ? `<text class="tick" x="${W - Rm}" y="${H - 8}" text-anchor="end">sitting ${offset + shown.length}</text>` : ""}
+          ${hits}
+        </svg>
+        <div class="tip" hidden></div>
+      </div>`;
+  }
+
+  /* Accuracy and pace by kind of question: the last few sittings beside the
+     whole history, so a kind that is getting better (or worse) shows. */
+  function kindTable(sittings) {
+    const recent = tally(sittings.slice(-RECENT)), all = tally(sittings);
+    if (all.size < 2) return "";
+    const rows = [...all.keys()].sort((a, b) => a.localeCompare(b)).map(kind => {
+      const r = recent.get(kind), a = all.get(kind);
+      return `<tr>
+        <td>${QApp.escapeHtml(kind)}</td>
+        <td class="num subtle">${r ? r.n : 0}</td>
+        ${r ? `<td class="num">${QApp.pct(r.correct / r.n)}</td>
+               <td class="barcell">${bar(r.correct / r.n, r.correct + " of " + r.n + " right")}</td>
+               <td class="num">${one(r.ms / r.n / 1000)}s</td>`
+            : `<td class="num subtle">—</td><td class="barcell"></td><td class="num subtle">—</td>`}
+        <td class="num subtle">${QApp.pct(a.correct / a.n)}</td>
+        <td class="num subtle">${one(a.ms / a.n / 1000)}s</td>
+      </tr>`;
+    }).join("");
+
+    const judged = [...recent.entries()].filter(([, g]) => g.n >= ENOUGH);
+    let callout = "";
+    if (judged.length >= 2) {
+      const weakest = judged.slice().sort((a, b) => a[1].correct / a[1].n - b[1].correct / b[1].n)[0];
+      const slowest = judged.slice().sort((a, b) => b[1].ms / b[1].n - a[1].ms / a[1].n)[0];
+      callout = `<p class="subtle">Lately the least accurate kind is <b>${QApp.escapeHtml(weakest[0])}</b>
+        (${QApp.pct(weakest[1].correct / weakest[1].n)}) and the slowest is <b>${QApp.escapeHtml(slowest[0])}</b>
+        (${one(slowest[1].ms / slowest[1].n / 1000)}s an answer). Only kinds with at least ${ENOUGH} recent answers are compared.</p>`;
+    }
+    const span = Math.min(RECENT, sittings.length);
+    return `
+      <table class="kinds">
+        <thead><tr>
+          <th>kind</th>
+          <th class="num">answered</th><th class="num">accuracy</th><th></th><th class="num">time</th>
+          <th class="num">all-time</th><th class="num">time</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="subtle">Answered, accuracy and time are for the last ${span === 1 ? "sitting" : span + " sittings"};
+        the two right-hand columns are every sitting. Time is the average per answer.</p>
+      ${callout}`;
+  }
+
+  function paperPanel(sittings) {
+    const latest = sittings[sittings.length - 1];
+    const recent = sittings.slice(-RECENT);
+    const sameMax = sittings.every(t => t.max === latest.max);
+    const share = t => t.max ? t.score / t.max : 0;
+    const best = sittings.reduce((b, t) => share(t) > share(b) ? t : b, sittings[0]);
+    const mean = recent.reduce((s, t) => s + (sameMax ? t.score : 100 * share(t)), 0) / recent.length;
+    return `
+      <div class="panel paper" data-paper="${QApp.escapeHtml(latest.formatId)}">
+        <h2>${QApp.escapeHtml(latest.formatName || latest.formatId)}</h2>
+        <p class="subtle">
+          ${sittings.length} sitting${sittings.length === 1 ? "" : "s"} &middot;
+          latest <b>${latest.score} / ${latest.max}</b> &middot;
+          best <b>${best.score} / ${best.max}</b>${recent.length > 1
+            ? ` &middot; average of the last ${recent.length} <b>${one(mean)}${sameMax ? "" : "%"}</b>` : ""}
+        </p>
+        ${scoreChart(sittings)}
+        ${sittings.length === 1 ? `<p class="subtle">One sitting so far. The line appears from the second.</p>` : ""}
+        ${kindTable(sittings)}
+      </div>`;
+  }
+
+  /* One tooltip per chart, shown on hover and on keyboard focus alike. */
+  function wireCharts() {
+    for (const chart of root.querySelectorAll(".chart")) {
+      const tip = chart.querySelector(".tip");
+      const show = hit => {
+        tip.textContent = "";
+        const strong = document.createElement("b");
+        strong.textContent = hit.dataset.score;
+        const when = document.createElement("span");
+        when.textContent = hit.dataset.when.replace(/&middot;/g, "\u00b7");
+        const detail = document.createElement("span");
+        detail.textContent = hit.dataset.detail;
+        tip.append(strong, when, detail);
+        tip.style.left = hit.dataset.x + "%";
+        tip.style.top = hit.dataset.y + "%";
+        tip.classList.toggle("flip", Number(hit.dataset.x) > 70);
+        tip.hidden = false;
+        for (const dot of chart.querySelectorAll(".dot")) dot.classList.toggle("on", dot.dataset.i === hit.dataset.i);
+      };
+      const hide = () => {
+        tip.hidden = true;
+        for (const dot of chart.querySelectorAll(".dot")) dot.classList.remove("on");
+      };
+      for (const hit of chart.querySelectorAll(".hit")) {
+        hit.addEventListener("pointerenter", () => show(hit));
+        hit.addEventListener("focus", () => show(hit));
+        hit.addEventListener("pointerleave", hide);
+        hit.addEventListener("blur", hide);
+      }
+    }
   }
 
   /* ---- Render ------------------------------------------------------------------ */
@@ -125,6 +329,8 @@ QApp.register((function () {
           : `<p class="subtle">Nothing yet. Questions appear here once you go over a target time.</p>`}
       </div>
 
+      ${byPaper(tests).map(paperPanel).join("")}
+
       <div class="panel">
         <h2>Test history</h2>
         ${tests.length ? `
@@ -166,6 +372,7 @@ QApp.register((function () {
       </div>`;
 
     wireDataControls();
+    wireCharts();
     QApp.setStatus("");
   }
 

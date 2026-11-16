@@ -414,7 +414,8 @@ QApp.register((function () {
         <p class="subtle">
           ${f.questionCount} questions &middot; ${f.optionCount} options each &middot;
           ${m.correct > 0 ? "+" + m.correct : m.correct} correct,
-          ${m.incorrect} wrong, ${m.skipped} not reached &middot; ${navigationText(f)}
+          ${m.incorrect} wrong, ${m.skipped} ${f.mustAnswer ? "not reached" : "skipped"} &middot;
+          ${navigationText(f)}${f.allowFlagging ? " &middot; flagging" : ""}
         </p>
         ${f.note ? `<p class="subtle">${f.note}</p>` : ""}
         <p class="subtle">${ready

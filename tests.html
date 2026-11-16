@@ -30,6 +30,7 @@
 <script src="validate-core.js"></script>
 <script src="formats.js"></script>
 <script src="gen-arithmetic.js"></script>
+<script src="gen-sequences.js"></script>
 <script src="questions/questions.js"></script>
 <script src="questions/questions-maven.js"></script>
 <script src="questions/questions-flow-arithmetic.js"></script>
@@ -275,9 +276,7 @@ function validatorTests() {
     QBank.eligible(QFormats.get("flow-math")).length, 0);
 
   // The real formats: Flow papers stay Flow, and nothing leaks the other way.
-  const seqPool = QBank.eligible(QFormats.get("flow-sequences"));
-  check("sequences paper can be filled", seqPool.length >= 26, true);
-  check("sequences paper draws only sequences", seqPool.every(q => q.category === "sequences"), true);
+  check("the sequences paper is generated too", QBank.eligible(QFormats.get("flow-sequences")).length, 0);
   check("Maven paper draws no drill questions", QBank.eligible(QFormats.get("maven-oa"))
     .some(q => q.category === "sequences" || q.category === "mental arithmetic"), false);
 }
@@ -325,6 +324,59 @@ function generatorTests() {
   const v = QValidate.validate({ questions: [], formats: [f], generators: [] });
   check("a format naming a missing generator is an error",
     v.issues.some(i => i.severity === "error" && i.field === "generator"), true);
+
+  /* -- number series -- */
+  const sg = QGenerators.get("number-series");
+  const sf = QFormats.get("flow-sequences");
+  check("the Flow sequences format names a loaded generator", !!sg, true);
+  const sp = sg.make(26);
+  check("a sequences paper is 26 questions", sp.length, 26);
+  check("with 26 different series", new Set(sp.map(q => q.check.terms.join(","))).size, 26);
+  check("no rule family more than twice in a paper", (() => {
+    const n = {};
+    for (const q of sp) n[q.check.rule.family] = (n[q.check.rule.family] || 0) + 1;
+    return Math.max(...Object.keys(n).map(k => n[k]));
+  })() <= 2, true);
+  check("easier series first, harder last",
+    sp.every((q, i) => i === 0 || q.difficulty >= sp[i - 1].difficulty), true);
+  check("every family has an independent re-marker",
+    sg.families.filter(name => QValidate.sequenceFamilies().indexOf(name) === -1), []);
+
+  const sr = QValidate.checkGenerator(sg, sf, 40);
+  check("1040 generated series re-marked", sr.sampled, 1040);
+  check("every one agrees with the second implementation of its rule", sr.issues, []);
+
+  // One series of every family, asked for by name, so none can go untested.
+  const families = {};
+  for (const name of sg.families) {
+    const made = sg.make(4, Math.random, [name]);
+    families[name] = made.length === 4 && made.every(q => q.check.rule.family === name)
+      && made.every(q => QValidate.checkGenerated(q, 4).length === 0);
+  }
+  check("all 27 families make valid series on request",
+    [Object.keys(families).length, Object.keys(families).filter(k => !families[k])], [27, []]);
+
+  // The re-marker has to be able to fail here as well.
+  const s0 = sp[0];
+  check("series re-marker catches a wrong key",
+    QValidate.checkGenerated(Object.assign({}, s0, { answer: (s0.answer + 1) % 4 }), 4).length > 0, true);
+  const badTerm = JSON.parse(JSON.stringify(s0));
+  badTerm.check.terms[1] = String(Number(badTerm.check.terms[1].split("/")[0]) + 1);
+  check("series re-marker catches a shown term the rule does not give",
+    QValidate.checkGenerated(badTerm, 4).length > 0, true);
+  const badRule = JSON.parse(JSON.stringify(s0));
+  badRule.check.rule.family = "no-such-family";
+  check("series re-marker refuses a rule it does not know",
+    QValidate.checkGenerated(badRule, 4).length > 0, true);
+  const badShow = JSON.parse(JSON.stringify(s0));
+  badShow.question = badShow.question.replace(/<span class="term">[^<]*<\/span>/, '<span class="term">424242</span>');
+  check("series re-marker catches a question that shows different terms",
+    QValidate.checkGenerated(badShow, 4).length > 0, true);
+
+  const srank = [0, 0, 0, 0];
+  for (let i = 0; i < 60; i++) for (const q of sg.make(26)) srank[q.answer]++;
+  check("the right answer is not hiding in the middle here either",
+    srank.every(n => n > 1560 * 0.19 && n < 1560 * 0.31), true);
 }
 
 /* ==========================================================================
@@ -432,7 +484,7 @@ function sprintTests() {
     if (again) again.click();
     check("generated format has a start button", !!$('[data-generate="selftest-sprint"]'), true);
     check("the Flow maths test is offered", !!$('[data-generate="flow-math"]'), true);
-    check("the Flow sequences test is offered", !!$('[data-start="flow-sequences"]'), true);
+    check("the Flow sequences test is offered", !!$('[data-generate="flow-sequences"]'), true);
 
     $('[data-generate="selftest-sprint"]').click();
     check("sprint starts on question 1", $(".controls").textContent.includes("Question 1 of 4"), true);
@@ -484,19 +536,28 @@ function sprintTests() {
     check("every question was answered", flow.counts.correct + flow.counts.wrong, 60);
     check("still nothing in the question history", QStore.attempts().length, 0);
 
-    // The sequences paper: bank-drawn, free navigation, 26 questions.
+    // The sequences paper: generated, but sat with free navigation.
     $("#again").click();
-    $('[data-start="flow-sequences"]').click();
+    $('[data-generate="flow-sequences"]').click();
     check("sequences paper is 26 questions", $(".controls").textContent.includes("Question 1 of 26"), true);
     check("sequences paper has four options", document.querySelectorAll("#options .option").length, 4);
     check("sequences paper has a palette", document.querySelectorAll("#palette button").length, 26);
+    check("the question is a series ending in a gap",
+      [document.querySelectorAll("#qtext .seq .term").length >= 3, !!$("#qtext .seq .next")], [true, true]);
+    key("1");
+    check("an answer does not move a free-navigation paper on",
+      $(".controls").textContent.includes("Question 1 of 26"), true);
+    key("ArrowRight"); key("ArrowRight"); key("2"); key("ArrowLeft");
+    check("and you can go back", $(".controls").textContent.includes("Question 2 of 26"), true);
     key("r");
     $("#submit").click();
     const seq = QStore.tests()[QStore.tests().length - 1];
-    check("sequences paper drew 26 different sequence questions",
-      [new Set(seq.items.map(i => i.qid)).size, seq.items.every(i => QBank.get(i.qid).category === "sequences")],
-      [26, true]);
-    check("bank-drawn paper does go into the question history", QStore.attempts().length, 26);
+    check("sequences paper is stored with 26 different questions",
+      [seq.formatId, new Set(seq.items.map(i => i.qid)).size, seq.generated], ["flow-sequences", 26, true]);
+    check("two answered, twenty-four skipped", [seq.counts.correct + seq.counts.wrong, seq.counts.skipped], [2, 24]);
+    check("each item records its kind of series", seq.items.every(i => typeof i.kind === "string" && i.kind.length > 0), true);
+    check("results list skipped questions on a free-navigation paper", document.querySelectorAll("#view details").length, 26);
+    check("generated series stay out of the question history too", QStore.attempts().length, 0);
   } finally {
     window.confirm = realConfirm;
     QStore.reset();
@@ -621,6 +682,57 @@ function dashboardTests() {
   check("slowest table flags the over-target question",
     $("#view").textContent.includes("4.5×"), true);
   check("export and reset are offered", [!!$("#export"), !!$("#reset")], [true, true]);
+  check("no paper panels before any paper is sat", document.querySelectorAll(".paper").length, 0);
+
+  // Three sittings of one paper and one of another.
+  const sitting = (formatId, day, score, items) => QStore.recordTest({
+    id: formatId + day, formatId, formatName: QFormats.get(formatId).name, startedAt: Date.UTC(2026, 10, day),
+    endedAt: Date.UTC(2026, 10, day) + 360000, timeLimitSec: 360, questionCount: 60, score, max: 60,
+    counts: { correct: items.filter(i => i.outcome === "correct").length,
+              wrong: items.filter(i => i.outcome === "wrong").length,
+              skipped: 60 - items.length },
+    autoSubmitted: true, generated: true, items });
+  const answers = (kind, n, right, ms) => Array.from({ length: n }, (x, i) =>
+    ({ qid: kind + i, answered: 0, outcome: i < right ? "correct" : "wrong", timeMs: ms, flagged: false, kind }));
+  sitting("flow-math", 1, 8, answers("integers +", 10, 9, 4000).concat(answers("decimals \u00f7", 10, 5, 9000)));
+  sitting("flow-math", 2, 14, answers("integers +", 12, 11, 4000).concat(answers("decimals \u00f7", 10, 6, 8000)));
+  sitting("flow-math", 3, 21, answers("integers +", 15, 15, 3000).concat(answers("decimals \u00f7", 12, 9, 7000)));
+  sitting("flow-sequences", 4, 5, answers("differences", 6, 5, 40000).concat(answers("digits", 5, 3, 80000)));
+
+  QApp.go("stats", { force: true });
+  const papers = document.querySelectorAll(".paper");
+  check("one panel per paper sat, most recent first",
+    Array.from(papers).map(p => p.dataset.paper), ["flow-sequences", "flow-math"]);
+  const maths = papers[1];
+  check("panel reports latest, best and the recent average",
+    [/latest\s+21 \/ 60/.test(maths.textContent), /best\s+21 \/ 60/.test(maths.textContent),
+     /average of the last 3\s+14\.3/.test(maths.textContent)], [true, true, true]);
+  check("the line has a point for every sitting",
+    maths.querySelector(".line").getAttribute("points").trim().split(" ").length, 3);
+  check("and a hover target for every sitting", maths.querySelectorAll(".hit").length, 3);
+  check("a rising score rises on the page", (() => {
+    const ys = maths.querySelector(".line").getAttribute("points").trim().split(" ").map(p => Number(p.split(",")[1]));
+    return ys[0] > ys[1] && ys[1] > ys[2];
+  })(), true);
+  check("the latest score is labelled at the end of the line", maths.querySelector(".endlabel").textContent, "21");
+  const kindRows = Array.from(maths.querySelectorAll("table.kinds tbody tr")).map(r =>
+    Array.from(r.children).map(td => td.textContent.trim()));
+  check("kinds are broken out with accuracy and time per answer", kindRows, [
+    ["decimals \u00f7", "32", "63%", "", "7.9s", "63%", "7.9s"],
+    ["integers +", "37", "95%", "", "3.6s", "95%", "3.6s"],
+  ]);
+  check("the weakest and slowest kinds are named",
+    /least accurate kind is\s+decimals \u00f7[\s\S]*slowest is\s+decimals \u00f7/.test(maths.textContent), true);
+  check("a single sitting gets a panel but no line",
+    [papers[0].querySelectorAll(".line").length, papers[0].querySelectorAll(".dot").length,
+     papers[0].textContent.includes("One sitting so far")], [0, 1, true]);
+  maths.querySelectorAll(".hit")[2].dispatchEvent(new Event("focus"));
+  const tip = maths.querySelector(".tip");
+  check("focusing a point shows its sitting",
+    [tip.hidden, tip.querySelector("b").textContent, /Sitting 3/.test(tip.textContent),
+     /15 right|24 right/.test(tip.textContent)], [false, "21 / 60", true, true]);
+  maths.querySelectorAll(".hit")[2].dispatchEvent(new Event("blur"));
+  check("and leaving hides it again", tip.hidden, true);
 
   QApp.go("bank", { force: true });
   const bank = $("#view").textContent;

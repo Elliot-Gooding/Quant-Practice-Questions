@@ -57,6 +57,7 @@ const files = [
   path.join(ROOT, "validate-core.js"),
   path.join(ROOT, "formats.js"),
   path.join(ROOT, "gen-arithmetic.js"),
+  path.join(ROOT, "gen-sequences.js"),
   ...bankFiles(),
 ];
 
@@ -151,7 +152,7 @@ function printIssues(label, list, colour) {
 }
 
 console.log(c.bold("\nQuant practice — bank validation"));
-console.log(c.dim(files.length - 4 + " bank file(s), " + questions.length + " questions, " +
+console.log(c.dim(files.length - 5 + " bank file(s), " + questions.length + " questions, " +
   formats.length + " test format(s)"));
 
 printIssues("ERRORS", errors, c.red);

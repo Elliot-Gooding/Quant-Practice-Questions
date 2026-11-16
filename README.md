@@ -9,7 +9,7 @@ Four tabs:
 |---|---|
 | **Practice** | one question at a time, at random, in order, or only what you got wrong |
 | **Test** | a timed mock paper under a firm's assessment format |
-| **Stats** | what your history adds up to, plus export/import/reset |
+| **Stats** | what your history adds up to, a score trend for each paper, plus export/import/reset |
 | **Bank** | the health of the question bank and what still needs writing |
 
 KaTeX is loaded from a CDN. Offline, maths falls back to raw `$...$` text and
@@ -105,7 +105,7 @@ the Test tab.
 | content | integers, decimals, fractions; + − × ÷ | number series: give the next term |
 | navigation | one at a time, no skipping, no going back | free; skip and return |
 | marking | +1 right, −1 wrong, 0 not reached | +1 right, −1 wrong, 0 skipped |
-| questions here | generated fresh every sitting | drawn from `questions-flow-sequences.js` |
+| questions here | generated fresh every sitting | generated fresh every sitting |
 
 Those figures are the ones published by Trading Interview, which hosts the
 assessment (researched November 2026). Flow's own careers page says only that
@@ -135,9 +135,35 @@ tab: 80 questions, each one a different mental-arithmetic technique, with the
 hint naming the shortcut and the solution working it. Learn the moves there,
 drill them on the generated paper.
 
-`questions-flow-sequences.js` is a starter set of 30, each with a different
-rule — enough to fill the 26-question paper and no more. With only 30 in the
-pool, successive papers overlap heavily until a fuller sequences section exists.
+The sequences paper comes from `gen-sequences.js`: 27 rule families (constant
+and changing differences, ratios, recurrences, two rules interleaved or taking
+turns, digit tricks, primes and powers), each used at most twice in a paper and
+given new numbers every time. Three things hold for every generated series:
+
+- the terms shown and the answer come from the same rule;
+- exactly one option is right, and no option repeats a term already shown;
+- **no simpler reading gives a different answer.** Before a series is used, a
+  set of standard rival rules — constant differences to the third level, a
+  constant ratio, "times m plus c", sums and products of earlier terms, two
+  interleaved series, two steps taking turns — is fitted to the terms shown,
+  and the series is discarded if any rival fits them all but predicts
+  something else.
+
+Easier families come first and harder ones last. That ordering is a choice made
+here; the real paper's order is not published.
+
+`questions-flow-sequences.js` is the Practice-tab companion: 30 worked series,
+each with a different rule, a hint and a solution. The timed paper does not draw
+on it.
+
+### Tracking the timed papers
+
+Each paper you have sat gets a panel on the Stats tab: the score at every
+sitting as a line, the latest and best scores, and a table of accuracy and
+seconds per answer by kind of question (`decimals ÷`, `fractions −`,
+`recurrences` …) for the last five sittings beside the all-time figures. Under
+the table it names the kind that is currently least accurate and the one that
+is slowest, which is usually where the next few marks are.
 
 ## Validating
 
@@ -156,7 +182,8 @@ difficulty and how close each format is to a full paper.
 It also makes 50 whole papers with every generator and re-marks each question
 from scratch — its own parser and its own exact fractions, sharing no code with
 the generator — failing if any keyed answer is not the true value or if any
-question has other than exactly one correct option.
+question has other than exactly one correct option. Sequence questions are
+re-marked from a second, separately written implementation of each rule family.
 
 The Bank tab runs the identical checks in the browser — both read
 `validate-core.js`, so they cannot drift apart.
@@ -205,6 +232,7 @@ index.html           shell: styles, tab bar, script tags
 bank.js              QBank, QFormats and QGenerators registries, and the question schema
 formats.js           the test formats
 gen-arithmetic.js    generator for the mental-arithmetic sprint paper
+gen-sequences.js     generator for the number-series paper
 store.js             attempt history, stats, export/import
 validate-core.js     the validation rules, shared by the CLI and the Bank tab
 validate.js          node CLI over those rules
@@ -214,7 +242,7 @@ view-test.js         │ one file per tab; each registers itself with QApp
 view-stats.js        │
 view-bank.js         ┘
 questions/           the bank, one file per batch
-tests.html           open it in a browser; it runs ~160 self checks and says
+tests.html           open it in a browser; it runs ~190 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.
 ```
