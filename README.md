@@ -134,15 +134,40 @@ and are flagged as such in `formats.js`:
   10 minutes (typed answers), and 75 or 80 in 8. If your invitation states a
   length, change `questionCount` and `timeLimitSec` in `formats.js` to match.
 
-The maths paper comes from `gen-arithmetic.js`, not the bank: sixty new sums
-each time, so there is nothing to memorise. The wrong options are the slips
-people really make (decimal point a place out, a dropped carry, tops and
-bottoms added), and the right answer is as likely to be the smallest option as
-the largest. Generated questions are not written to the per-question history —
-they are never seen again — but the paper is, with a breakdown by kind of sum
-on the results screen. To guard against a double-click answering a sum you have
-not read, an answer within a quarter of a second of the question appearing is
-ignored.
+The maths paper comes from `gen-arithmetic.js`, not the bank: sixty new
+questions each time, so there is nothing to memorise. Its question kinds, wording
+and difficulty are modelled on 55 questions copied from a sitting of the host's
+own practice test (November 2026), in the proportions seen there:
+
+| kind | example |
+|---|---|
+| whole numbers + − | `863 − 339 = ?` |
+| two-digit × | `47 × 43 = ?` |
+| missing whole number | `49 × ? = 343`, `52 ÷ ? = 65` |
+| missing decimal | `4.9 ÷ ? = 0.7`, `? × 0.12 = 18` |
+| decimals | `5.6 × 0.8 = ?`, `0.55 − 0.026 = ?` |
+| decimal × decimal | `10.7 * 13.2 = ?` |
+| three-way × | `0.6 * 70 * 5,000 = ?` |
+| percentages | `36 is …% of 80` |
+| fractions | `12/32 + 15/16 = ?`, `15 ÷ 5/6 = ?` |
+| missing fraction | `7/9 − ? = 5/18` |
+
+Most are a times-table fact or a short sum with the decimal point moved or one
+number hidden. The two kinds written with `*` are the slow ones, and their wrong
+options are spaced about a tenth of the answer apart so that an estimate settles
+them. The answer options were not part of what was copied, so they are a guess:
+four of them, the wrong ones built from common slips (a decimal point a place
+out, a digit changed, the wrong operation), with the right answer as likely to
+be the smallest option as the largest.
+
+An earlier version of this generator was written from public descriptions alone
+and was much harder than the real thing. Sittings recorded before the change
+are still on the Stats tab under their old kinds; they are not comparable.
+
+Generated questions are not written to the per-question history — they are
+never seen again — but the paper is, with a breakdown by kind on the results
+screen. To guard against a double-click answering a question you have not read,
+an answer within a quarter of a second of the question appearing is ignored.
 
 `questions-flow-arithmetic.js` is the companion to that paper, for the Practice
 tab: 127 questions, each one a different mental-arithmetic technique, with the

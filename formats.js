@@ -105,11 +105,13 @@ QFormats.add([
     mustAnswer: true,
     allowFlagging: false,
     generator: "arithmetic-sprint",
-    note: `60 sums in 6 minutes — six seconds each. One at a time: picking an
-      option is final and moves you on, and you cannot skip. A wrong answer
-      costs a mark; a sum you never reach costs nothing, so a sure answer
-      slowly beats a guess quickly. No calculator. Finishing all 60 is not
-      expected. Four options is the reported count, not a confirmed one.`,
+    note: `60 questions in 6 minutes — six seconds each. One at a time: picking
+      an option is final and moves you on, and you cannot skip. A wrong answer
+      costs a mark; a question you never reach costs nothing, so a sure answer
+      slowly beats a guess quickly. No calculator. The questions are modelled
+      on the host's own practice test; the ones written with * are for
+      estimating, not working out. Four options is the reported count, not a
+      confirmed one.`,
   },
 
   {

@@ -233,18 +233,71 @@ const QValidate = (function () {
 
   const same = (x, y) => x.n * y.d === y.n * x.d;
 
-  function evalCheck(expr) {
-    const m = /^\(?(-?[\d.]+(?:\/\d+)?)\)? ([-+*\/]) \(?(-?[\d.]+(?:\/\d+)?)\)?$/.exec(expr);
-    if (!m) throw new Error("cannot read the sum \"" + expr + "\"");
-    const a = parseValue(m[1]), b = parseValue(m[3]);
-    switch (m[2]) {
+  /* One operand of a sum: a number, or a fraction in brackets. */
+  function operand(token) {
+    const m = /^\(?(-?[\d.]+(?:\/\d+)?)\)?$/.exec(token);
+    if (!m) throw new Error("cannot read the number \"" + token + "\"");
+    return parseValue(m[1]);
+  }
+
+  function apply(a, op, b) {
+    switch (op) {
       case "+": return { n: a.n * b.d + b.n * a.d, d: a.d * b.d };
       case "-": return { n: a.n * b.d - b.n * a.d, d: a.d * b.d };
       case "*": return { n: a.n * b.n, d: a.d * b.d };
-      default:
-        if (b.n === 0n) throw new Error("division by zero in \"" + expr + "\"");
+      case "/":
+        if (b.n === 0n) throw new Error("division by zero");
         return { n: a.n * b.d, d: a.d * b.n };
+      default: throw new Error("unknown operation \"" + op + "\"");
     }
+  }
+
+  /* The value of "a op b", or of a run of multiplications "a * b * c". With
+     `unknown` given, a "?" in the sum stands for that value. */
+  function evalCheck(expr, unknown) {
+    const tokens = String(expr).trim().split(" ");
+    if (tokens.length % 2 === 0 || tokens.length < 3 || tokens.length > 5)
+      throw new Error("cannot read the sum \"" + expr + "\"");
+    if (tokens.length === 5 && !(tokens[1] === "*" && tokens[3] === "*"))
+      throw new Error("only multiplications may be chained: \"" + expr + "\"");
+    const value = token => {
+      if (token !== "?") return operand(token);
+      if (!unknown) throw new Error("\"" + expr + "\" has an unknown and nothing to try in it");
+      return unknown;
+    };
+    let acc = value(tokens[0]);
+    for (let i = 1; i < tokens.length; i += 2) acc = apply(acc, tokens[i], value(tokens[i + 1]));
+    return acc;
+  }
+
+  /* How an arithmetic check record decides whether a value is the answer.
+       { expr: "58 + 5" }                       the value of the sum
+       { expr: "49 * ? = 343" }                 the value that makes it true,
+                                                found by trying each option in it
+       { kind: "percent", part, whole }         100 * part / whole              */
+  function rightAnswer(c) {
+    if (c.kind === "percent") {
+      const part = parseValue(c.part), whole = parseValue(c.whole);
+      if (whole.n === 0n) throw new Error("a percentage of nothing");
+      return v => same({ n: v.n * whole.n, d: v.d * whole.d }, { n: part.n * 100n, d: part.d });
+    }
+    const sides = String(c.expr).split(" = ");
+    if (sides.length === 2) {
+      if (sides[0].split(" ").filter(t => t === "?").length !== 1)
+        throw new Error("\"" + c.expr + "\" should hide exactly one number");
+      const rhs = operand(sides[1]);
+      return v => { try { return same(evalCheck(sides[0], v), rhs); } catch (e) { return false; } };
+    }
+    if (sides.length !== 1) throw new Error("cannot read \"" + c.expr + "\"");
+    const truth = evalCheck(c.expr);
+    return v => same(v, truth);
+  }
+
+  /* A question line and its check record, reduced to the same bare form, so
+     that what is shown can be compared with what is marked. */
+  function bare(text) {
+    return plainOf(text).replace(/<[^>]+>/g, "").replace(/\u00d7/g, "*").replace(/\u00f7/g, "/")
+      .replace(/\u2026/g, "?").replace(/[\s()]/g, "");
   }
 
   /* ---- Re-marking generated sequences ----------------------------------------
@@ -398,7 +451,8 @@ const QValidate = (function () {
     return String(html)
       .replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, "$1/$2")
       .replace(/\u2212/g, "-")
-      .replace(/\u202f/g, "");
+      .replace(/\u202f/g, "")
+      .replace(/(\d),(?=\d{3}(?!\d))/g, "$1");          // thousands commas
   }
 
   /* Everything wrong with one generated question, as a list of messages. */
@@ -416,13 +470,21 @@ const QValidate = (function () {
         return out.concat("no check record to re-mark it with");
       const series = c.kind === "sequence";
       const label = series ? "series " + (c.terms || []).join(", ") : c.expr;
-      const truth = series ? remarkSequence(c, out) : evalCheck(c.expr);
+      let right;
+      if (series) { const truth = remarkSequence(c, out); right = v => same(v, truth); }
+      else right = rightAnswer(c);
       const values = c.options.map(parseValue);
-      if (!same(values[q.answer], truth))
+      if (!right(values[q.answer]))
         out.push(label + " is not " + c.options[q.answer] + ", the keyed option");
-      if (values.filter(v => same(v, truth)).length !== 1)
-        out.push(label + ": " + values.filter(v => same(v, truth)).length + " options are correct");
-      if (!same(parseValue(c.value), truth)) out.push(label + ": stated value " + c.value + " is wrong");
+      if (values.filter(right).length !== 1)
+        out.push(label + ": " + values.filter(right).length + " options are correct");
+      if (!right(parseValue(c.value))) out.push(label + ": stated value " + c.value + " is wrong");
+      // A sum must be shown as it is marked.
+      if (!series) {
+        const marked = c.expr + (c.kind === "percent" || c.expr.indexOf(" = ") !== -1 ? "" : " = ?");
+        if (bare(q.question) !== bare(marked))
+          out.push(label + ": the question shows " + plainOf(q.question).replace(/<[^>]+>/g, "") + " instead");
+      }
       // The page shows HTML; make sure it says what the check record says.
       q.options.forEach((html, i) => {
         const plain = plainOf(html);
