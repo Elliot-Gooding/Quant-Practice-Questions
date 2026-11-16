@@ -170,6 +170,13 @@ here; the real paper's order is not published.
 each with a different rule, a hint and a solution. The timed paper does not draw
 on it.
 
+Each has a second set (`questions-flow-arithmetic-2.js`, 47 techniques;
+`questions-flow-sequences-2.js`, 18 series). Nothing in a second set is a
+first-set question with new numbers: the arithmetic adds shortcuts the first set
+does not cover, and the series use rules that appear neither in the first set
+nor among the generated paper's families — rules on digits, on positions, or on
+more than one earlier term.
+
 ### Tracking the timed papers
 
 Each paper you have sat gets a panel on the Stats tab: the score at every
@@ -214,10 +221,11 @@ Not published by Wincent, so decided here: one problem and one follow-up per
 block; only the opening problem gates the next block; a problem solved after
 clues still counts. Change `formats.js` if your interviewer says otherwise.
 
-The problems are in `questions/questions-wincent.js`: 18 pairs, six at each
+The problems are in `questions/questions-wincent.js` and
+`questions/questions-wincent-2.js`: 36 pairs between them, twelve at each
 level. They are written in the style of the interview and are not a record of
 what Wincent asks; two are modelled on problems candidates have reported. All
-36 questions are also ordinary free-response questions in Practice — filter by
+72 questions are also ordinary free-response questions in Practice — filter by
 the tag `interview` to work through them — and none can be drawn into a
 multiple-choice paper. A mock takes problems you have not attempted first, so
 practising them one by one uses up fresh material for the mock.
@@ -314,8 +322,12 @@ questions/           the bank, one file per batch:
                                                      counting and market making
                        questions-flow-arithmetic.js  80 mental-arithmetic techniques
                        questions-flow-sequences.js   30 worked number series
+                       questions-flow-arithmetic-2.js  47 more techniques, none repeated
+                       questions-flow-sequences-2.js   18 more series, on rules the first
+                                                       set and the generated paper do not use
                        questions-wincent.js          36 free-response interview problems:
                                                      18 opening problems, each with a follow-up
+                       questions-wincent-2.js        36 more, in the same shape
 tests.html           open it in a browser; it runs ~250 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.
