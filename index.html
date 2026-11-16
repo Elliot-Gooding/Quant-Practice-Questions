@@ -24,17 +24,23 @@
     --warn: #e6b450;
     --series: #5a94ee;      /* the one chart line: a step of the accent that sits
                                in the readable lightness band on the panel */
-    --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
-    --sans: -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* One typeface throughout, and a plain one. An earlier serif stack fell
+       back to Georgia on Windows, whose digits are old-style: they ride above
+       and below the line like lower-case letters, which is the last thing a
+       page of numbers needs. */
+    --sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
 
   * { box-sizing: border-box; }
+  button, input, select, textarea { font-variant-numeric: inherit; }
 
   html, body { margin: 0; background: var(--bg); color: var(--ink); }
 
   body {
-    font-family: var(--serif);
-    font-size: 19px;
+    font-family: var(--sans);
+    /* Digits all the same height and the same width, wherever they appear. */
+    font-variant-numeric: lining-nums tabular-nums;
+    font-size: 18px;
     line-height: 1.55;
     max-width: 40rem;
     margin: 0 auto;
@@ -55,7 +61,7 @@
     color: var(--muted);
     margin-bottom: 2rem;
   }
-  header h1 { font-family: var(--serif); font-size: 22px; font-weight: 400; margin: 0; color: var(--ink); }
+  header h1 { font-family: var(--sans); font-size: 22px; font-weight: 400; margin: 0; color: var(--ink); }
 
   .tabs { display: flex; gap: .25rem; }
   .tabs a {
@@ -117,7 +123,7 @@
   .options li { margin-top: .5rem; }
   .option {
     display: flex; gap: .75rem; align-items: baseline; width: 100%; text-align: left;
-    font-family: var(--serif); font-size: inherit; line-height: 1.5;
+    font-family: var(--sans); font-size: inherit; line-height: 1.5;
     background: none; color: var(--ink);
     border: 1px solid var(--panel-edge); border-radius: 8px;
     padding: .65rem .9rem; cursor: pointer;
@@ -244,7 +250,7 @@
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   tbody tr + tr td { border-top: 1px solid rgba(36,57,90,.5); }
 
-  h2 { font-family: var(--serif); font-weight: 400; font-size: 19px; margin: 2rem 0 .75rem; }
+  h2 { font-family: var(--sans); font-weight: 400; font-size: 19px; margin: 2rem 0 .75rem; }
   h2:first-child { margin-top: 0; }
   .subtle { color: var(--muted); font-family: var(--sans); font-size: 13px; }
 
@@ -271,7 +277,7 @@
   details summary { cursor: pointer; }
   details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   details[open] summary { margin-bottom: .5rem; }
-  .detail { font-family: var(--serif); font-size: 17px; padding: .25rem 0 1.25rem; }
+  .detail { font-family: var(--sans); font-size: 17px; padding: .25rem 0 1.25rem; }
   .detail .options { margin-top: .75rem; }
   .detail .reveal { display: block; }
 
