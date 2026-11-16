@@ -12,6 +12,19 @@
    valid answer index. Free-response questions are silently left out — there is
    no way to mark them under exam conditions.
 
+   Two format fields change where the questions come from and how they are sat:
+
+     generator   the paper is made fresh by a generator (gen-arithmetic.js)
+                 instead of being drawn from the bank. Generated questions are
+                 one-offs, so they are not written to the per-question history;
+                 the paper itself still goes into the test history.
+     mustAnswer  one question at a time, no skipping, no going back: choosing
+                 an option is final and moves straight on.
+
+   A format with an `interview` field is not a paper at all. It gets a panel on
+   the start screen like the others, and starting it hands the tab over to
+   view-interview.js until that mock is finished or abandoned.
+
    The run lives in memory. Navigating away asks first; reloading the page
    loses it.
    ========================================================================== */
@@ -22,8 +35,14 @@ QApp.register((function () {
   const LETTERS = "ABCDEFGH".split("");
   const WARN_AT = 0.2;          // countdown turns amber inside the last fifth
 
+  // On a mustAnswer paper an answer is final and the next question appears under
+  // the pointer at once, so the second half of a double-click (or a key held a
+  // moment too long) would answer a question nobody has read. Anything arriving
+  // this soon after a question is shown is ignored. tests.html turns it off.
+  const MIN_ANSWER_MS = (typeof window !== "undefined" && window.QTEST_NO_ANSWER_GUARD) ? 0 : 250;
+
   let root = null;
-  let screen = "start";         // start | running | review | results
+  let screen = "start";         // start | running | review | results | interview
   let format = null;
   let run = null;               // the paper in progress, or the one just sat
   let enteredAt = null;         // when the current question was opened
@@ -34,6 +53,8 @@ QApp.register((function () {
   function mount(node) {
     root = node;
     if (screen === "running" || screen === "review") stopClock();
+    // A finished mock interview shows its results again, like a finished paper.
+    if (screen === "interview" && QInterview.resume(node)) return;
     // Coming back to the tab after finishing shows the results again; otherwise
     // start fresh.
     if (screen !== "results") screen = "start";
@@ -42,12 +63,31 @@ QApp.register((function () {
 
   function unmount() {
     stopClock();
+    if (screen === "interview") QInterview.unmount();
     root = null;
   }
 
   function canLeave() {
+    if (screen === "interview")
+      return QInterview.inProgress() ? "A mock interview is in progress. Leave and abandon it?" : null;
     if (screen !== "running" && screen !== "review") return null;
     return "A test is in progress. Leave and abandon it?";
+  }
+
+  /* Hand the tab to the mock interview until it gives it back. */
+  function startInterview(fmt) {
+    screen = "interview";
+    if (!QInterview.start(fmt, root, () => { screen = "start"; render(); })) screen = "start";
+  }
+
+  /* The question behind a paper item. Generated questions live only in the run
+     that made them; everything else is in the bank. */
+  function questionOf(item) {
+    return (run && run.byId && run.byId.get(item.qid)) || QBank.get(item.qid);
+  }
+
+  function generatorOf(fmt) {
+    return fmt && fmt.generator ? QGenerators.get(fmt.generator) : null;
   }
 
   /* ---- Building a paper ------------------------------------------------------ */
@@ -104,7 +144,8 @@ QApp.register((function () {
   }
 
   function startRun(fmt, count, timeLimitSec) {
-    const questions = drawPaper(fmt, count);
+    const generator = generatorOf(fmt);
+    const questions = generator ? generator.make(count) : drawPaper(fmt, count);
     if (!questions.length) return;
 
     format = fmt;
@@ -116,6 +157,8 @@ QApp.register((function () {
       endedAt: null,
       timeLimitSec,
       questionCount: questions.length,
+      generated: !!generator,
+      byId: new Map(questions.map(q => [q.id, q])),
       cursor: 0,
       items: questions.map(q => ({
         qid: q.id,
@@ -172,6 +215,7 @@ QApp.register((function () {
 
   function goTo(i) {
     if (!run || i < 0 || i >= run.items.length) return;
+    if (format.mustAnswer) return;                // only an answer moves you on
     if (format.navigation === "linear" && i < run.cursor) return;   // forward only
     leaveQuestion();
     run.cursor = i;
@@ -183,12 +227,24 @@ QApp.register((function () {
     if (!run || screen !== "running") return;
     const item = run.items[run.cursor];
     if (slot < 0 || slot >= item.order.length) return;
+    if (format.mustAnswer && enteredAt !== null && Date.now() - enteredAt < MIN_ANSWER_MS) return;
     item.answered = item.order[slot];
+    if (format.mustAnswer) return lockAndAdvance();
+    render();
+  }
+
+  /* mustAnswer papers: the answer just given is final. Move to the next
+     question, or hand the paper in if that was the last one. */
+  function lockAndAdvance() {
+    leaveQuestion();
+    if (run.cursor === run.items.length - 1) return submit(false);
+    run.cursor++;
+    enteredAt = Date.now();
     render();
   }
 
   function clearAnswer() {
-    if (!run || screen !== "running") return;
+    if (!run || screen !== "running" || format.mustAnswer) return;
     run.items[run.cursor].answered = null;
     render();
   }
@@ -202,7 +258,7 @@ QApp.register((function () {
   /* ---- Marking -------------------------------------------------------------------- */
 
   function outcomeOf(item) {
-    const q = QBank.get(item.qid);
+    const q = questionOf(item);
     if (item.answered === null) return "skipped";
     return item.answered === q.answer ? "correct" : "wrong";
   }
@@ -221,6 +277,11 @@ QApp.register((function () {
     return { score, counts, max: run.items.length * m.correct };
   }
 
+  /* What a question counts as in the results breakdown. */
+  function kindOf(q) {
+    return (q && (q.breakdown || q.category)) || "(none)";
+  }
+
   function submit(auto) {
     if (!run || (screen !== "running" && screen !== "review")) return;
     leaveQuestion();
@@ -235,7 +296,10 @@ QApp.register((function () {
 
     // One attempt per question, tagged with this run, so test performance feeds
     // the same stats and review set as practice.
-    for (const item of run.items)
+    // A generated question is never seen again, so a per-question record of it
+    // would only crowd real history out of the store. The paper as a whole is
+    // still recorded below.
+    if (!run.generated) for (const item of run.items)
       QStore.recordAttempt({
         qid: item.qid,
         mode: "test",
@@ -259,9 +323,10 @@ QApp.register((function () {
       max: run.max,
       counts: run.counts,
       autoSubmitted: run.autoSubmitted,
+      generated: run.generated,
       items: run.items.map(i => ({
         qid: i.qid, answered: i.answered, outcome: outcomeOf(i),
-        timeMs: i.timeMs, flagged: i.flagged,
+        timeMs: i.timeMs, flagged: i.flagged, kind: kindOf(questionOf(i)),
       })),
     });
 
@@ -292,6 +357,8 @@ QApp.register((function () {
     const attempted = QStore.attemptedIds();
 
     const rows = formats.map(f => {
+      if (f.interview) return QInterview.row(f);
+      if (f.generator) return generatedRow(f);
       const pool = QBank.eligible(f);
       const eligible = pool.length;
       const fresh = pool.filter(q => !attempted.has(q.id)).length;
@@ -304,7 +371,7 @@ QApp.register((function () {
             ${f.questionCount} questions &middot; ${f.optionCount} options each &middot;
             ${m.correct > 0 ? "+" + m.correct : m.correct} correct,
             ${m.incorrect} wrong, ${m.skipped} skipped &middot;
-            ${f.navigation === "free" ? "free navigation" : "forward only"}${f.allowFlagging ? " &middot; flagging" : ""}
+            ${navigationText(f)}${f.allowFlagging ? " &middot; flagging" : ""}
           </p>
           ${f.note ? `<p class="subtle">${f.note}</p>` : ""}
           <p class="subtle">${eligible} of ${QBank.size()} questions in the bank are eligible${
@@ -325,6 +392,15 @@ QApp.register((function () {
 
     root.innerHTML = rows;
 
+    for (const button of root.querySelectorAll("[data-interview]"))
+      button.addEventListener("click", () => startInterview(QFormats.get(button.dataset.interview)));
+
+    for (const button of root.querySelectorAll("[data-generate]"))
+      button.addEventListener("click", () => {
+        const f = QFormats.get(button.dataset.generate);
+        startRun(f, f.questionCount, f.timeLimitSec);
+      });
+
     for (const button of root.querySelectorAll("[data-start]"))
       button.addEventListener("click", () => {
         const f = QFormats.get(button.dataset.start);
@@ -338,15 +414,47 @@ QApp.register((function () {
         startRun(f, n, Math.max(60, Math.round(f.timeLimitSec * n / f.questionCount)));
       });
 
+    QApp.renderMath(root);
     QApp.setStatus("A paper only uses questions with exactly the right number of options. " +
       "The Bank tab shows which questions still need them.");
+  }
+
+  function navigationText(f) {
+    if (f.mustAnswer) return "one at a time, no skipping or going back";
+    return f.navigation === "free" ? "free navigation" : "forward only";
+  }
+
+  /* Start-screen panel for a format whose paper is generated, not drawn. */
+  function generatedRow(f) {
+    const m = f.marking;
+    const ready = !!generatorOf(f);
+    return `
+      <div class="panel">
+        <div class="meta"><span>${f.name}</span><span class="timer">${Math.round(f.timeLimitSec / 60)} min</span></div>
+        <p class="subtle">
+          ${f.questionCount} questions &middot; ${f.optionCount} options each &middot;
+          ${m.correct > 0 ? "+" + m.correct : m.correct} correct,
+          ${m.incorrect} wrong, ${m.skipped} ${f.mustAnswer ? "not reached" : "skipped"} &middot;
+          ${navigationText(f)}${f.allowFlagging ? " &middot; flagging" : ""}
+        </p>
+        ${f.note ? `<p class="subtle">${f.note}</p>` : ""}
+        <p class="subtle">${ready
+          ? "Every sitting is a new paper, generated on the spot — nothing is drawn from the bank, so it never repeats and never runs out."
+          : `<span class="warnc">The generator "${QApp.escapeHtml(f.generator)}" is not loaded — check the script tags in index.html.</span>`}</p>
+        <nav class="actions">
+          ${ready
+            ? `<button class="primary" data-generate="${f.id}">Start ${f.name.split(" — ")[0]}</button>`
+            : `<button disabled>Generator missing</button>`}
+        </nav>
+      </div>`;
   }
 
   /* -- running -- */
 
   function renderRunning() {
     const item = run.items[run.cursor];
-    const q = QBank.get(item.qid);
+    const q = questionOf(item);
+    const locked = !!format.mustAnswer;
 
     root.innerHTML = `
       <div class="controls">
@@ -356,7 +464,7 @@ QApp.register((function () {
         <span id="countdown" class="timer"></span>
       </div>
 
-      <div class="panel">
+      <div class="panel${locked ? " sprint" : ""}">
         <div class="meta">
           <span>${q.category}${q.difficulty ? " · " + QApp.difficultyName(q.difficulty) : ""}</span>
           <span>${item.flagged ? '<span class="warnc">flagged</span>' : ""}</span>
@@ -371,13 +479,15 @@ QApp.register((function () {
         </ul>
       </div>
 
-      <nav class="actions">
+      ${locked ? `<nav class="actions">
+        <button id="finish" class="right">End the test now</button>
+      </nav>` : `<nav class="actions">
         ${format.navigation === "free" ? `<button id="prev" ${run.cursor === 0 ? "disabled" : ""}>Previous</button>` : ""}
         <button id="clear" ${item.answered === null ? "disabled" : ""}>Clear</button>
         ${format.allowFlagging ? `<button id="flag">${item.flagged ? "Unflag" : "Flag"}</button>` : ""}
         <button id="next" class="right" ${run.cursor === run.items.length - 1 ? "disabled" : ""}>Next</button>
         <button id="finish" class="primary">${format.navigation === "free" ? "Review and submit" : "Submit"}</button>
-      </nav>
+      </nav>`}
 
       ${format.navigation === "free" ? `<div class="palette" id="palette"></div>
         <div class="legend">
@@ -406,6 +516,12 @@ QApp.register((function () {
     if (format.navigation === "free") renderPalette(root.querySelector("#palette"));
 
     const answered = run.items.filter(i => i.answered !== null).length;
+    if (locked) {
+      QApp.setStatus(
+        `${answered} answered, ${run.items.length - answered} to go. An answer is final and moves you on.<br>` +
+        `Keys: <kbd>1</kbd>–<kbd>${KEYS[format.optionCount - 1]}</kbd> answer.`);
+      return;
+    }
     QApp.setStatus(
       `${answered} answered, ${run.items.length - answered} left.<br>` +
       `Keys: <kbd>1</kbd>–<kbd>${KEYS[format.optionCount - 1]}</kbd> answer, <kbd>0</kbd> clear, ` +
@@ -478,6 +594,9 @@ QApp.register((function () {
   function confirmSubmit() {
     const skipped = run.items.filter(i => i.answered === null).length;
     if (!skipped) return true;
+    if (format.mustAnswer)
+      return window.confirm("End the test with " + skipped + " question(s) not reached? They score " +
+        format.marking.skipped + ".");
     return window.confirm(skipped + " question(s) unanswered. Submit anyway?");
   }
 
@@ -485,8 +604,16 @@ QApp.register((function () {
 
   function renderResults() {
     const minutes = Math.round((run.endedAt - run.startedAt) / 6000) / 10;
-    const rows = run.items.map((item, i) => {
-      const q = QBank.get(item.qid);
+    const locked = !!format.mustAnswer;
+    const blank = locked ? "not reached" : "skipped";
+
+    // On a mustAnswer paper everything after the last answer was never seen,
+    // so listing it would bury the questions that were.
+    const listed = run.items.map((item, i) => ({ item, i }))
+      .filter(x => !locked || x.item.answered !== null);
+
+    const rows = listed.map(({ item, i }) => {
+      const q = questionOf(item);
       const outcome = outcomeOf(item);
       const yours = item.answered === null ? "—" : LETTERS[item.order.indexOf(item.answered)];
       const right = LETTERS[item.order.indexOf(q.answer)];
@@ -502,7 +629,7 @@ QApp.register((function () {
         </tr>
         <tr><td></td><td colspan="5">
           <details data-q="${i}">
-            <summary class="subtle">${q.category} — show the question and solution</summary>
+            <summary class="subtle">${kindOf(q)} — show the question and solution</summary>
             <div class="detail">
               <div class="qtext">${q.question}</div>
               <ul class="options">${item.order.map((orig, slot) => `
@@ -525,11 +652,14 @@ QApp.register((function () {
         <p class="subtle">
           <span class="good">${run.counts.correct} correct</span> &middot;
           <span class="bad">${run.counts.wrong} wrong</span> &middot;
-          ${run.counts.skipped} skipped${format.marking.incorrect < 0
+          ${run.counts.skipped} ${blank}${format.marking.incorrect < 0
             ? ` &middot; wrong answers cost ${Math.abs(format.marking.incorrect * run.counts.wrong)}`
             : ""}
         </p>
+        ${paceLine()}
       </div>
+
+      ${breakdownPanel()}
 
       <div class="panel">
         <table>
@@ -539,6 +669,8 @@ QApp.register((function () {
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
+        ${locked && listed.length < run.items.length
+          ? `<p class="subtle">${run.items.length - listed.length} question(s) not reached are not listed.</p>` : ""}
       </div>
 
       <nav class="actions">
@@ -561,13 +693,68 @@ QApp.register((function () {
     const toStats = root.querySelector("#stats");
     if (toStats) toStats.addEventListener("click", () => QApp.go("stats"));
 
-    QApp.setStatus("Every question here has been added to your history, so the ones you " +
-      "missed will come round again in review mode.");
+    QApp.setStatus(run.generated
+      ? "This paper is in your test history on the Stats tab. Its questions were generated " +
+        "for this sitting only, so they are not added to your question history."
+      : "Every question here has been added to your history, so the ones you " +
+        "missed will come round again in review mode.");
+  }
+
+  /* How fast the answered questions went, and what share of the marks that is. */
+  function paceLine() {
+    const done = run.items.filter(i => i.answered !== null);
+    if (!done.length) return "";
+    const avg = done.reduce((t, i) => t + i.timeMs, 0) / done.length / 1000;
+    const allowed = run.timeLimitSec / run.items.length;
+    return `<p class="subtle">
+      ${done.length} of ${run.items.length} answered &middot;
+      ${avg.toFixed(1)}s per answer (the paper allows ${allowed.toFixed(1)}s) &middot;
+      ${Math.round(100 * run.counts.correct / done.length)}% of answers right &middot;
+      ${Math.round(100 * Math.max(0, run.score) / run.max)}% of the marks
+    </p>`;
+  }
+
+  /* Results by kind of question, so the weak spot is a line in a table rather
+     than an impression. Only shown when the paper mixes more than one kind. */
+  function breakdownPanel() {
+    const groups = new Map();
+    for (const item of run.items) {
+      if (item.answered === null) continue;
+      const kind = kindOf(questionOf(item));
+      const g = groups.get(kind) || { n: 0, correct: 0, wrong: 0, ms: 0 };
+      g.n++;
+      g[outcomeOf(item) === "correct" ? "correct" : "wrong"]++;
+      g.ms += item.timeMs;
+      groups.set(kind, g);
+    }
+    if (groups.size < 2) return "";
+    const m = format.marking;
+    const body = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([kind, g]) => `
+      <tr>
+        <td>${kind}</td>
+        <td class="num">${g.n}</td>
+        <td class="num good">${g.correct}</td>
+        <td class="num ${g.wrong ? "bad" : "subtle"}">${g.wrong}</td>
+        <td class="num">${g.correct * m.correct + g.wrong * m.incorrect}</td>
+        <td class="num">${(g.ms / g.n / 1000).toFixed(1)}s</td>
+      </tr>`).join("");
+    return `
+      <div class="panel">
+        <h2>Where the marks went</h2>
+        <table>
+          <thead><tr>
+            <th>kind</th><th class="num">answered</th><th class="num">right</th>
+            <th class="num">wrong</th><th class="num">net</th><th class="num">avg time</th>
+          </tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>`;
   }
 
   /* ---- Keyboard --------------------------------------------------------------------- */
 
   function onKey(e) {
+    if (screen === "interview") return QInterview.onKey(e);
     if (screen === "review") {
       if (e.key === "b") { screen = "running"; enteredAt = Date.now(); render(); return true; }
       if (e.key === "Enter") { if (confirmSubmit()) submit(false); return true; }
@@ -576,7 +763,14 @@ QApp.register((function () {
     if (screen !== "running") return false;
 
     const slot = KEYS.indexOf(e.key);
-    if (slot !== -1 && slot < format.optionCount) { answer(slot); return true; }
+    if (slot !== -1 && slot < format.optionCount) {
+      if (!(format.mustAnswer && e.repeat)) answer(slot);
+      return true;
+    }
+
+    // Nothing but an answer moves a mustAnswer paper on, so the navigation
+    // keys below must not reach it.
+    if (format.mustAnswer) return false;
 
     switch (e.key) {
       case "0": case "Backspace": clearAnswer(); return true;

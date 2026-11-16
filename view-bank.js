@@ -40,7 +40,8 @@ QApp.register((function () {
     const result = QValidate.validate({
       questions,
       formats,
-      problems: QBank.problems().concat(QFormats.problems()),
+      problems: QBank.problems().concat(QFormats.problems(), QGenerators.problems()),
+      generators: QGenerators.all(),      // re-marks a few generated papers too
     });
 
     const errors = result.issues.filter(i => i.severity === "error");
@@ -80,6 +81,28 @@ QApp.register((function () {
             <th class="num">eligible</th><th class="num">needs</th><th></th>
           </tr></thead>
           <tbody>${formats.map(f => {
+            if (f.interview) {
+              const levels = [...new Set(f.interview.blocks.map(b => b.level))];
+              const pool = levels.map(l => QBank.interviewProblems(l).length);
+              const ok = f.interview.blocks.every(b => QBank.interviewProblems(b.level).length > 0);
+              return `<tr>
+                <td>${f.name}</td>
+                <td class="num subtle">none</td>
+                <td class="num">${pool.reduce((a, b) => a + b, 0)}</td>
+                <td class="num subtle">${f.interview.blocks.length}</td>
+                <td class="${ok ? "good" : "warnc"}">${ok
+                  ? "ready — " + pool.join(" / ") + " opening problems by level"
+                  : "a block has no problems"}</td>
+              </tr>`;
+            }
+            if (f.generator) return `<tr>
+              <td>${f.name}</td>
+              <td class="num subtle">${f.optionCount}</td>
+              <td class="num subtle">—</td>
+              <td class="num subtle">${f.questionCount}</td>
+              <td class="${QGenerators.get(f.generator) ? "good" : "bad"}">${
+                QGenerators.get(f.generator) ? "generated each sitting" : "generator missing"}</td>
+            </tr>`;
             const eligible = QBank.eligible(f).length;
             const short = Math.max(0, f.questionCount - eligible);
             return `<tr>
@@ -97,9 +120,10 @@ QApp.register((function () {
         <h2>Still free-response only</h2>
         <p class="subtle">
           These have no <code>options</code> array, so they work in practice and are
-          skipped by test mode. Add <code>options</code> and <code>answer</code> to
-          any of them and they join the pool — the option count has to match the
-          format exactly.
+          skipped by the multiple-choice papers. Add <code>options</code> and
+          <code>answer</code> to any of them and they join the pool — the option count
+          has to match the format exactly. The interview problems are meant to stay
+          this way: the mock interview is the one test that uses them.
         </p>
         ${Object.keys(needing).length ? Object.keys(needing).sort().map(cat => `
           <details>

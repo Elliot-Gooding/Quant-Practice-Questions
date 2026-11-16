@@ -3,6 +3,9 @@
    ----------------------------------------------------------------------------
    QBank    — the question bank. Every file in questions/ calls QBank.add([...]).
    QFormats — test formats. formats.js calls QFormats.add([...]).
+   QGenerators — question generators, for formats whose papers are made fresh
+              each sitting rather than drawn from the bank (a mental-arithmetic
+              sprint, say). gen-arithmetic.js calls QGenerators.add({...}).
 
    This file must load before either. There is no auto-discovery: file:// blocks
    fetch(), so a <script> tag in index.html is the only way to load a local file
@@ -27,6 +30,19 @@
      tags        array of strings, e.g. ['linearity', 'bayes']. Finer-grained
                  than category, and filterable.
      source      which firm or assessment the question is modelled on
+
+   Three more optional fields belong to free-response questions written for a
+   spoken interview (see questions/questions-wincent.js). Practice ignores them;
+   the mock interview on the Test tab is built on them.
+
+     hints        array of clues, in the order an interviewer would give them.
+                  `hint` should repeat the first.
+     shortAnswer  the bare answer, shown for self-marking before the solution
+     interview    { level, followUp, twist } — marks the question as the opening
+                  problem of an interview block. `level` is 1, 2 or 3;
+                  `followUp` is the id of the question asked once this one is
+                  solved; `twist` is that follow-up as it would be put in the
+                  room, leaning on the problem already on the table.
 
    Backslashes double inside backticks: \\frac, \\binom, \\sqrt.
    ========================================================================== */
@@ -147,6 +163,20 @@ const QBank = (function () {
      Shared by the test runner, the bank view and the validator, so all three
      agree on what "eligible" means. */
   function ineligibleReason(q, format) {
+    // An interview format draws opening problems of the levels its blocks ask
+    // for, each with a follow-up to go with it. Options never come into it.
+    if (format.interview) {
+      if (!isInterviewProblem(q)) return "not the opening problem of an interview block";
+      if (!format.interview.blocks.some(b => b.level === q.interview.level))
+        return "interview level " + q.interview.level + " is not one this format asks for";
+      return null;
+    }
+    // A format can fence its pool by category: `categories` is an allow-list,
+    // `excludeCategories` a block-list. Neither set means every category.
+    if (Array.isArray(format.categories) && format.categories.indexOf(q.category) === -1)
+      return "category \"" + q.category + "\" is not one this format draws from";
+    if (Array.isArray(format.excludeCategories) && format.excludeCategories.indexOf(q.category) !== -1)
+      return "category \"" + q.category + "\" is excluded from this format";
     if (!isMultipleChoice(q)) return "no options";
     if (q.options.length !== format.optionCount)
       return "has " + q.options.length + " options, format needs " + format.optionCount;
@@ -157,11 +187,28 @@ const QBank = (function () {
     return null;
   }
 
+  /* ---- Interview problems --------------------------------------------------- */
+
+  /* A free-response question that opens an interview block: it has a level, a
+     short answer to mark against, and a follow-up that exists and has one too. */
+  function isInterviewProblem(q) {
+    if (!q || isMultipleChoice(q) || !q.interview || typeof q.interview !== "object") return false;
+    if ([1, 2, 3].indexOf(q.interview.level) === -1 || !q.shortAnswer) return false;
+    const next = byId.get(q.interview.followUp);
+    return !!next && !isMultipleChoice(next) && !!next.shortAnswer;
+  }
+
+  function interviewProblems(level) {
+    return all().filter(q => isInterviewProblem(q) && q.interview.level === level);
+  }
+
   function isEligible(q, format) {
     return ineligibleReason(q, format) === null;
   }
 
+  /* A generated format draws nothing from the bank, so nothing is eligible. */
   function eligible(format) {
+    if (format.generator) return [];
     return all().filter(q => isEligible(q, format));
   }
 
@@ -174,6 +221,7 @@ const QBank = (function () {
     add, all, get, has, size,
     categories, tags, filter,
     isMultipleChoice, isEligible, ineligibleReason, eligible,
+    isInterviewProblem, interviewProblems,
     problems: getProblems,
   };
 })();
@@ -198,6 +246,19 @@ const QFormats = (function () {
     if (!f.id) return "no id";
     if (byId.has(f.id)) return "duplicate id: " + f.id;
     if (!f.name) return "no name";
+    // An interview format has blocks instead of a question count, and no
+    // options, marking or navigation: its questions are free-response.
+    if (f.interview !== undefined) {
+      const blocks = f.interview && f.interview.blocks;
+      if (!Array.isArray(blocks) || !blocks.length) return "interview.blocks must be a non-empty array";
+      for (const b of blocks) {
+        if (!b || [1, 2, 3].indexOf(b.level) === -1) return "every interview block needs a level of 1, 2 or 3";
+        if (!(b.minutes > 0)) return "every interview block needs a positive number of minutes";
+      }
+      if (!(f.timeLimitSec > 0)) return "timeLimitSec must be a positive number";
+      if (f.generator !== undefined) return "an interview format cannot also name a generator";
+      return null;
+    }
     if (!(f.questionCount > 0)) return "questionCount must be a positive number";
     if (!(f.timeLimitSec > 0)) return "timeLimitSec must be a positive number";
     if (!(f.optionCount >= 2)) return "optionCount must be at least 2";
@@ -206,6 +267,15 @@ const QFormats = (function () {
       if (typeof f.marking[k] !== "number") return "marking." + k + " must be a number";
     if (NAVIGATIONS.indexOf(f.navigation) === -1)
       return "navigation must be one of: " + NAVIGATIONS.join(", ");
+    for (const k of ["categories", "excludeCategories"]) {
+      if (f[k] === undefined) continue;
+      if (!Array.isArray(f[k]) || !f[k].length || f[k].some(c => typeof c !== "string" || !c))
+        return k + " must be a non-empty array of category names";
+    }
+    if (f.generator !== undefined && (typeof f.generator !== "string" || !f.generator))
+      return "generator must be the id of a question generator";
+    if (f.mustAnswer && f.navigation !== "linear")
+      return "mustAnswer needs navigation: \"linear\"";
     if (f.categoryWeights) {
       const sum = Object.values(f.categoryWeights).reduce((a, b) => a + b, 0);
       if (sum !== f.questionCount)
@@ -236,5 +306,51 @@ const QFormats = (function () {
 })();
 
 
+/* ============================================================================
+   GENERATORS
+   ----------------------------------------------------------------------------
+   A generator makes multiple-choice questions on demand. A format that names
+   one (format.generator = its id) gets a brand new paper every sitting and
+   never touches the bank. A generator is:
+
+     id      unique slug, referenced from formats.js
+     name    shown in the Bank view
+     make(count, rand)
+             returns `count` question objects in the bank's own schema (id,
+             category, question, options, answer, solution ...). `rand` is an
+             optional () => [0,1) source so a paper can be reproduced.
+
+   Each generated question also carries
+     check   { expr, value, options } — the sum as plain text, the keyed value,
+             and each option's value, so an independent evaluator can re-mark
+             it. validate.js and tests.html both do exactly that.
+   ========================================================================== */
+
+const QGenerators = (function () {
+
+  const generators = [];
+  const byId = new Map();
+  const problems = [];
+
+  function add(g) {
+    const bad = !g || typeof g !== "object" ? "not an object"
+      : !g.id ? "no id"
+      : byId.has(g.id) ? "duplicate id: " + g.id
+      : typeof g.make !== "function" ? "no make(count) function"
+      : null;
+    if (bad) { problems.push({ kind: "bad-generator", message: bad, id: g && g.id || null }); return; }
+    byId.set(g.id, g);
+    generators.push(g);
+  }
+
+  return {
+    add,
+    all: () => generators,
+    get: id => byId.get(id) || null,
+    problems: () => problems.slice(),
+  };
+})();
+
+
 /* Node (validate.js) loads this file with require(); browsers ignore it. */
-if (typeof module !== "undefined" && module.exports) module.exports = { QBank, QFormats };
+if (typeof module !== "undefined" && module.exports) module.exports = { QBank, QFormats, QGenerators };
