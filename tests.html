@@ -853,8 +853,8 @@ function interviewTests() {
   try {
     /* -- the problems -- */
     const openings = QBank.all().filter(q => QBank.isInterviewProblem(q));
-    check("twelve opening problems at each level",
-      [1, 2, 3].map(l => QBank.interviewProblems(l).length), [12, 12, 12]);
+    check("eighteen opening problems at each level",
+      [1, 2, 3].map(l => QBank.interviewProblems(l).length), [18, 18, 18]);
     check("every one has a follow-up with its own answer, solution and clues", openings.every(q => {
       const n = QBank.get(q.interview.followUp);
       return !!n && !n.interview && !!n.shortAnswer && !!n.solution && Array.isArray(n.hints) && n.hints.length >= 2;
@@ -863,7 +863,7 @@ function interviewTests() {
       new Set(openings.map(q => q.interview.followUp)).size, openings.length);
     check("the first clue doubles as the practice hint",
       QBank.all().filter(q => Array.isArray(q.hints)).every(q => q.hint === q.hints[0]), true);
-    check("the interview format draws exactly the opening problems", QBank.eligible(F).length, 36);
+    check("the interview format draws exactly the opening problems", QBank.eligible(F).length, 54);
     check("no interview question can be drawn into a multiple-choice paper",
       QFormats.all().filter(f => !f.interview && !f.generator)
         .every(f => QBank.eligible(f).every(q => !q.hints && !q.interview && !q.shortAnswer)), true);
@@ -1027,7 +1027,7 @@ function interviewTests() {
 
     QApp.go("bank", { force: true });
     check("the bank view shows the interview as ready",
-      /Wincent quant interview[\s\S]*ready — 12 \/ 12 \/ 12 opening problems/.test($("#view").textContent), true);
+      /Wincent quant interview[\s\S]*ready — 18 \/ 18 \/ 18 opening problems/.test($("#view").textContent), true);
   } finally {
     window.confirm = realConfirm;
     QStore.reset();
