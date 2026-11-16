@@ -1,0 +1,8 @@
+# Nothing here is built or installed; these are only the files an operating
+# system or an editor leaves behind.
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+node_modules/
