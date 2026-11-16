@@ -241,7 +241,15 @@ view-practice.js     ┐
 view-test.js         │ one file per tab; each registers itself with QApp
 view-stats.js        │
 view-bank.js         ┘
-questions/           the bank, one file per batch
+questions/           the bank, one file per batch:
+                       questions.js                  130 probability, free response
+                       questions-maven.js            61 five-option questions, Maven style
+                       questions-quant-oa.js         123 more five-option questions across
+                                                     probability, expected value, conditional
+                                                     probability, logic, number sense,
+                                                     counting and market making
+                       questions-flow-arithmetic.js  80 mental-arithmetic techniques
+                       questions-flow-sequences.js   30 worked number series
 tests.html           open it in a browser; it runs ~190 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.
