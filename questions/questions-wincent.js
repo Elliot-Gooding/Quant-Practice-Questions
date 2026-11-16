@@ -22,8 +22,9 @@
                   repeats the first, which is all Practice shows.
      shortAnswer  the bare answer, for marking yourself before the full solution.
 
-   The file is in three sets of eighteen problems, six at each level in each
-   set, so the mock has eighteen problems to draw on for every block. A few
+   The file is in three sets of eighteen problems and a fourth of six, with the
+   levels evenly represented, so the mock has twenty problems to draw on for
+   every block. A few
    are argued, not calculated — logic puzzles such as the light switches, the
    sand timers and the tigers, and proofs such as the coin game and the safe
    with ten locks — and for those the argument is the answer.
@@ -2990,6 +2991,352 @@ QBank.add([
       <p>A fair walk starting $a$ from one end and $b$ from the other takes $a \\times b$ steps on
       average, so the answer is $2 \\times 3 =$ <b>6 steps</b>. (A neighbouring corner would take
       $1 \\times 4 = 4$.)</p>`,
+  },
+
+  /* ==== FOURTH SET ======================================================== */
+
+  /* ---- Level 1 -------------------------------------------------------------- */
+
+  {
+    id: "higher-or-lower-three-cards",
+    category: "expected value",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Three cards numbered 1, 2 and 3 are shuffled and the top one is turned over.
+      Before each of the other two is turned, you say whether it will be higher or lower than the
+      card before it, and you win £1 each time you are right. Playing as well as possible, how
+      much do you expect to win?`,
+    hint: `The second guess costs you nothing: once two cards have been seen, you know the third.`,
+    hints: [
+      `The second guess costs you nothing: once two cards have been seen, you know the third.`,
+      `The first guess is certain unless the first card is the 2.`,
+    ],
+    shortAnswer: `$\\frac{11}{6} \\approx$ £1.83.`,
+    solution: `<p>The last guess is always right: with two cards showing you know the third.</p>
+      <p>The first guess is certain if the first card is a 1 or a 3, which happens two times in
+      three, and a coin toss if it is the 2. So it is right with probability
+      $\\frac{2}{3} + \\frac{1}{3} \\times \\frac{1}{2} = \\frac{5}{6}$.</p>
+      <p>Expected winnings: $\\frac{5}{6} + 1 = \\frac{11}{6} \\approx$ <b>£1.83</b>.</p>`,
+    interview: {
+      level: 1,
+      followUp: "higher-or-lower-four-cards",
+      twist: `And with four cards, numbered 1 to 4, and three guesses?`,
+    },
+  },
+  {
+    id: "higher-or-lower-four-cards",
+    category: "expected value",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Four cards numbered 1 to 4 are shuffled and the top one is turned over. Before each
+      of the other three is turned, you say whether it will be higher or lower than the card
+      before it, and you win £1 each time you are right. Playing as well as possible, how much do
+      you expect to win?`,
+    hint: `The last guess is certain. The first is certain if the first card is a 1 or a 4, and right two times in three otherwise.`,
+    hints: [
+      `The last guess is certain. The first is certain if the first card is a 1 or a 4, and right two times in three otherwise.`,
+      `For the middle guess, look at the second card and the two still face down. You are certain exactly when the second card is the smallest or the largest of those three.`,
+    ],
+    shortAnswer: `$\\frac{8}{3} \\approx$ £2.67.`,
+    solution: `<p><b>Last guess:</b> three cards are showing, so you know the fourth: 1.</p>
+      <p><b>First guess:</b> a 1 or a 4 makes it certain; a 2 or a 3 leaves two cards on one side
+      and one on the other, so you are right $\\frac{2}{3}$ of the time. That averages
+      $\\frac{1}{2} + \\frac{1}{2} \\times \\frac{2}{3} = \\frac{5}{6}$.</p>
+      <p><b>Middle guess:</b> take the second card and the two still hidden. The second card is
+      equally likely to be the lowest, middle or highest of these three. Lowest or highest, you
+      are certain; middle, it is a coin toss. That is
+      $\\frac{2}{3} + \\frac{1}{3} \\times \\frac{1}{2} = \\frac{5}{6}$.</p>
+      <p>Total: $\\frac{5}{6} + \\frac{5}{6} + 1 = \\frac{8}{3} \\approx$ <b>£2.67</b>.</p>`,
+  },
+
+  {
+    id: "odd-or-even-two-cards",
+    category: "probability",
+    difficulty: 1,
+    time: 300,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Five cards are numbered 1 to 5, and two are drawn at random. I will take a bet,
+      at even money, on whether the two numbers add up to an odd or an even total. Which do you
+      back, and what is the bet worth to you per £1 staked?`,
+    hint: `An odd total needs one odd card and one even card.`,
+    hints: [
+      `An odd total needs one odd card and one even card.`,
+      `There are three odd cards and two even ones: $3 \\times 2 = 6$ mixed pairs out of the 10 possible.`,
+    ],
+    shortAnswer: `Odd. It comes up $\\frac{3}{5}$ of the time, so the bet is worth 20p per £1.`,
+    solution: `<p>The total is odd exactly when one card is odd and the other even. With three
+      odd cards and two even there are $3 \\times 2 = 6$ such pairs, out of
+      $\\binom{5}{2} = 10$.</p>
+      <p>So back <b>odd</b>, at $\\frac{3}{5}$. At even money that is worth
+      $\\frac{3}{5} - \\frac{2}{5} = \\frac{1}{5}$: 20p for every £1 staked.</p>`,
+    interview: {
+      level: 1,
+      followUp: "odd-or-even-with-replacement",
+      twist: `Now the first card is put back and the pack reshuffled before the second is drawn.
+      Which way do you bet?`,
+    },
+  },
+  {
+    id: "odd-or-even-with-replacement",
+    category: "probability",
+    difficulty: 1,
+    time: 240,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Five cards are numbered 1 to 5. One is drawn, noted and put back, the pack is
+      shuffled, and a second is drawn. At even money, would you back the two numbers adding up to
+      an odd total or an even one, and what is the bet worth per £1 staked?`,
+    hint: `The two draws are now independent. An odd total is odd-then-even or even-then-odd.`,
+    hints: [
+      `The two draws are now independent. An odd total is odd-then-even or even-then-odd.`,
+      `$2 \\times \\frac{3}{5} \\times \\frac{2}{5} = \\frac{12}{25}$.`,
+    ],
+    shortAnswer: `Even. It comes up $\\frac{13}{25}$ of the time, an edge of 4p per £1.`,
+    solution: `<p>Each draw is odd with probability $\\frac{3}{5}$ and even with probability
+      $\\frac{2}{5}$, independently. An odd total needs one of each:
+      $2 \\times \\frac{3}{5} \\times \\frac{2}{5} = \\frac{12}{25}$.</p>
+      <p>So the total is even with probability $\\frac{13}{25}$: back <b>even</b>, for an edge of
+      $\\frac{13}{25} - \\frac{12}{25} = \\frac{1}{25}$, or 4p per £1. Putting the card back makes
+      a matching pair possible, and two of the same parity always make an even total.</p>`,
+  },
+
+  /* ---- Level 2 -------------------------------------------------------------- */
+
+  {
+    id: "chameleons",
+    category: "logic",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `An island has 13 red, 15 green and 17 blue chameleons. Whenever two of different
+      colours meet, both change to the third colour. Nothing else changes their colour. Can all
+      45 ever be the same colour?`,
+    hint: `Follow what one meeting does to the three counts: two go down by one, the third goes up by two.`,
+    hints: [
+      `Follow what one meeting does to the three counts: two go down by one, the third goes up by two.`,
+      `Look at the counts' remainders on division by 3. What does a meeting do to all three remainders?`,
+    ],
+    shortAnswer: `No. The three counts start with different remainders on division by 3, and every meeting keeps them different, but a single colour would need two counts of zero.`,
+    solution: `<p>A meeting lowers two of the counts by 1 and raises the third by 2. On division
+      by 3, going up by 2 is the same as going down by 1, so every meeting shifts all three
+      remainders by the same amount.</p>
+      <p>The counts 13, 15 and 17 leave remainders 1, 0 and 2: all different. Shifting all three
+      together keeps them all different, for ever.</p>
+      <p>If every chameleon were one colour, two of the counts would be 0, with the same remainder.
+      That can never happen: <b>no</b>.</p>`,
+    interview: {
+      level: 2,
+      followUp: "chameleons-one-more-green",
+      twist: `One more green chameleon arrives, making 13 red, 16 green and 17 blue. Can they all
+      become the same colour now?`,
+    },
+  },
+  {
+    id: "chameleons-one-more-green",
+    category: "logic",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `An island has 13 red, 16 green and 17 blue chameleons. Whenever two of different
+      colours meet, both change to the third colour. Can all 46 end up the same colour? If so,
+      how?`,
+    hint: `A meeting shifts the remainders of all three counts, on division by 3, by the same amount. Which two counts start with the same remainder?`,
+    hints: [
+      `A meeting shifts the remainders of all three counts, on division by 3, by the same amount. Which two counts start with the same remainder?`,
+      `Red and green differ by 3. One meeting between a green and a blue makes them equal.`,
+    ],
+    shortAnswer: `Yes: all blue. One green meets one blue, leaving 15 red, 15 green and 16 blue; then each red meets a green.`,
+    solution: `<p>For two colours to vanish, their two counts must reach 0 together, so they must
+      have the same remainder on division by 3, and a meeting never changes whether they do. Here
+      13 and 16 both leave remainder 1, so red and green can vanish together.</p>
+      <p>Let one green meet one blue: both turn red, giving 15 red, 15 green, 16 blue. Now pair
+      off the 15 reds with the 15 greens; every pair turns blue. All 46 are <b>blue</b>.</p>`,
+  },
+
+  {
+    id: "big-with-three-dice",
+    category: "expected value",
+    difficulty: 2,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Three dice are rolled. You bet £1 at even money on “big”: a total of 11 or more.
+      But there is a house rule: if all three dice show the same number, you lose whatever the
+      total. What is your expected profit per game?`,
+    hint: `Forget the house rule for a moment. How likely is a total of 11 or more? Try replacing every die $x$ by $7 - x$.`,
+    hints: [
+      `Forget the house rule for a moment. How likely is a total of 11 or more? Try replacing every die $x$ by $7 - x$.`,
+      `Totals of 3 to 10 and 11 to 18 are mirror images: 108 rolls each. Now take the triples away from your half.`,
+    ],
+    shortAnswer: `A loss of $\\frac{1}{36}$ of a pound, about 2.8p a game.`,
+    solution: `<p>Replace each die $x$ by $7 - x$ and a total of $t$ becomes $21 - t$, so totals of
+      10 or less and 11 or more are equally likely: 108 rolls each out of 216.</p>
+      <p>Three of the six triples (4-4-4, 5-5-5, 6-6-6) lie in your half and now lose. So you win
+      on 105 rolls and lose on 111.</p>
+      <p>Expected profit: $\\frac{105 - 111}{216} = -\\frac{1}{36}$, a loss of about <b>2.8p</b> a
+      game. The whole of the house's edge is those three triples.</p>`,
+    interview: {
+      level: 2,
+      followUp: "thirty-to-one-on-a-triple",
+      twist: `The same table pays 30 to 1 on “any triple”. Is that a better or a worse bet than
+      big?`,
+    },
+  },
+  {
+    id: "thirty-to-one-on-a-triple",
+    category: "expected value",
+    difficulty: 2,
+    time: 360,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `Three dice are rolled. A bet on “any triple” wins when all three dice show the
+      same number, and pays 30 to 1. What is the expected profit on a £1 stake, and what payout
+      would make the bet fair?`,
+    hint: `How many of the 216 rolls are triples?`,
+    hints: [
+      `How many of the 216 rolls are triples?`,
+      `Six rolls win £30 each; the other 210 lose £1 each.`,
+    ],
+    shortAnswer: `A loss of $\\frac{5}{36}$ of a pound, about 14p per £1 — five times worse than betting on big. A fair payout would be 35 to 1.`,
+    solution: `<p>Six of the 216 rolls are triples. They win £30 each, and the other 210 rolls lose
+      £1 each.</p>
+      <p>Expected profit: $\\frac{6 \\times 30 - 210}{216} = -\\frac{30}{216} = -\\frac{5}{36}$, a
+      loss of about <b>14p</b> per £1. A fair bet would pay $\\frac{210}{6} = 35$ to 1.</p>
+      <p>Long odds hide a large edge: the even-money bet on a big total, which loses on triples,
+      costs only $\\frac{1}{36}$ per £1.</p>`,
+  },
+
+  /* ---- Level 3 -------------------------------------------------------------- */
+
+  {
+    id: "bluffing-with-a-queen",
+    category: "market making",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You and an opponent each put £1 into a pot. You are dealt an ace or a queen, each
+      with probability one half, and only you see it. Your opponent holds a king, and you both
+      know that. You may check, in which case the cards are shown and the higher card takes the
+      pot. Or you may bet £2, after which your opponent either folds, giving you the pot, or
+      calls with £2, and the higher card takes everything. You bet every time you hold the ace.
+      How often should you bet with the queen, and how often should your opponent call?`,
+    hint: `If you never bluff, your opponent never calls. If you always bluff, they always call. At the right frequency in between, they gain nothing by choosing either way.`,
+    hints: [
+      `If you never bluff, your opponent never calls. If you always bluff, they always call. At the right frequency in between, they gain nothing by choosing either way.`,
+      `Make your opponent indifferent. When you bet, calling wins them £3 against a queen and loses £3 against an ace, while folding loses the £1 they put in.`,
+      `They are indifferent when one bet in three is a bluff. And you are indifferent with a queen when checking (−£1) is as good as betting (+£1 if they fold, −£3 if they call).`,
+    ],
+    shortAnswer: `Bet with half your queens; your opponent should call half the time. The game is then worth 50p a hand to you.`,
+    solution: `<p><b>Your bluffs.</b> Facing a bet, your opponent loses £1 by folding. Calling
+      wins £3 against a queen and loses £3 against an ace. If a share $x$ of your bets are
+      queens, calling is worth $3x - 3(1 - x)$, which equals $-1$ when $x = \\frac{1}{3}$. You
+      bet every ace, so one bluff for every two aces means betting <b>half</b> your queens.</p>
+      <p><b>Their calls.</b> With a queen, checking loses £1. Betting wins £1 if they fold and
+      loses £3 if they call: $1 - 4c$ if they call a share $c$ of the time. That equals $-1$
+      when $c =$ <b>$\\frac{1}{2}$</b>.</p>
+      <p><b>The value.</b> Your aces win $\\frac{1}{2} \\times 3 + \\frac{1}{2} \\times 1 = 2$ and your
+      queens lose 1 either way, so you make $\\frac{1}{2}(2) - \\frac{1}{2}(1) =$ 50p a hand. With
+      no betting allowed the game would be worth nothing: the bet, and the bluffs that make it
+      credible, are the whole of your edge.</p>`,
+    interview: {
+      level: 3,
+      followUp: "bluffing-with-a-bigger-bet",
+      twist: `Suppose the bet is £4 instead of £2. Do you bluff more or less often, and does your
+      opponent call more or less?`,
+    },
+  },
+  {
+    id: "bluffing-with-a-bigger-bet",
+    category: "market making",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You and an opponent each put £1 into a pot. You hold an ace or a queen, equally
+      likely, seen only by you; your opponent holds a king and you both know it. You may check
+      (cards shown, higher card takes the pot) or bet £4, after which your opponent folds or
+      calls with £4. You bet every ace. How often should you bet with the queen, how often
+      should your opponent call, and what is the game worth to you?`,
+    hint: `Calling now wins your opponent £5 against a queen and loses £5 against an ace; folding still loses £1.`,
+    hints: [
+      `Calling now wins your opponent £5 against a queen and loses £5 against an ace; folding still loses £1.`,
+      `They are indifferent when two bets in five are bluffs. You are indifferent with a queen when $1 - 6c = -1$.`,
+    ],
+    shortAnswer: `Bluff more: two queens in three. Your opponent calls less: one time in three. The game is worth 67p a hand to you.`,
+    solution: `<p>Calling is worth $5x - 5(1 - x)$ to your opponent when a share $x$ of your bets
+      are bluffs, and folding is worth $-1$. These are equal at $x = \\frac{2}{5}$: two bluffs for
+      every three aces, so bet <b>two-thirds</b> of your queens.</p>
+      <p>With a queen, betting is worth $1 - 6c$ against a calling share $c$, and checking is
+      worth $-1$: equal at $c =$ <b>$\\frac{1}{3}$</b>.</p>
+      <p>Your aces then win $\\frac{1}{3} \\times 5 + \\frac{2}{3} \\times 1 = \\frac{7}{3}$, and the
+      game is worth $\\frac{1}{2} \\times \\frac{7}{3} - \\frac{1}{2} = \\frac{2}{3}$: about
+      <b>67p</b> a hand, up from 50p with a £2 bet. A bigger bet lets you bluff more often,
+      because your opponent has to be right more often to make calling pay.</p>`,
+  },
+
+  {
+    id: "a-repeat-loses-everything",
+    category: "expected value",
+    difficulty: 3,
+    time: 720,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `You roll a die as many times as you like, adding up the rolls, and may stop
+      whenever you choose and take the total in pounds. But if any roll shows a number you have
+      already rolled, you get nothing. How should you play, and what is the game worth?`,
+    hint: `With $k$ different numbers already rolled, another roll loses everything with probability $\\frac{k}{6}$. Start from the end: would you ever roll a fourth time?`,
+    hints: [
+      `With $k$ different numbers already rolled, another roll loses everything with probability $\\frac{k}{6}$. Start from the end: would you ever roll a fourth time?`,
+      `After three numbers a further roll loses half the time, so it would have to at least double your total. It cannot.`,
+      `After two numbers totalling $s$, the four unseen numbers add up to $21 - s$, so one more roll is worth $\\frac{4s + (21 - s)}{6} = \\frac{s}{2} + 3.5$.`,
+    ],
+    shortAnswer: `Always roll twice. Roll a third time only if your total is 6 or less (at 7 it makes no difference). Never roll a fourth time. The game is worth $\\frac{223}{36} \\approx$ £6.19.`,
+    solution: `<p><b>A fourth roll?</b> With three numbers totalling $s$, the three unseen numbers
+      add up to $21 - s$, and one more roll is worth $\\frac{3s + (21 - s)}{6} = \\frac{s}{3} + 3.5$.
+      That beats $s$ only if $s < 5.25$, and three different numbers total at least 6. So never.</p>
+      <p><b>A third roll?</b> With two numbers totalling $s$, one more roll is worth
+      $\\frac{4s + (21 - s)}{6} = \\frac{s}{2} + 3.5$, which beats $s$ when $s < 7$. Roll again on
+      6 or less; 7 is a toss-up.</p>
+      <p><b>A second roll?</b> Always: even holding a 6, rolling on is worth 7.5.</p>
+      <p>Averaging over the first two rolls, with this plan, gives $\\frac{223}{36} \\approx$
+      <b>£6.19</b>.</p>`,
+    interview: {
+      level: 3,
+      followUp: "losing-the-lot",
+      twist: `Playing that way, how often do you walk away with nothing?`,
+    },
+  },
+  {
+    id: "losing-the-lot",
+    category: "probability",
+    difficulty: 3,
+    time: 480,
+    tags: ["interview"],
+    source: "Wincent interview",
+    question: `In a dice game you add up your rolls and may stop at any time, but a roll that
+      repeats an earlier number loses everything. You play like this: always roll twice; roll a
+      third time only if the first two rolls are different and total 6 or less; never roll a
+      fourth time. What is the probability that you finish with nothing?`,
+    hint: `You can lose on the second roll or on the third.`,
+    hints: [
+      `You can lose on the second roll or on the third.`,
+      `The second roll repeats the first with probability $\\frac{1}{6}$. A third roll happens after 12 of the 36 possible first two rolls, and then repeats with probability $\\frac{2}{6}$.`,
+    ],
+    shortAnswer: `$\\frac{5}{18} \\approx 0.28$.`,
+    solution: `<p>The second roll repeats the first with probability $\\frac{1}{6}$.</p>
+      <p>You roll a third time when the first two are different and total 6 or less. The unordered
+      pairs are 1–2, 1–3, 1–4, 1–5, 2–3 and 2–4: 12 of the 36 ordered rolls. The third roll then
+      repeats one of the two numbers with probability $\\frac{2}{6}$.</p>
+      <p>$\\frac{1}{6} + \\frac{12}{36} \\times \\frac{2}{6} = \\frac{1}{6} + \\frac{1}{9} =$
+      <b>$\\frac{5}{18}$</b>, about 0.28.</p>`,
   },
 
 ]);
