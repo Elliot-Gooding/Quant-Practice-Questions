@@ -31,17 +31,17 @@ QBank.add([
   },
 
   {
-    id: "ma-add-odd-numbers",
+    id: "ma-add-rotated-digits",
     category: "mental arithmetic",
     difficulty: 1,
     time: 15,
     tags: ["integers", "addition"],
     source: "Flow Traders OA",
-    question: `$$1 + 3 + 5 + 7 + 9 + 11 + 13 + 15 + 17 + 19$$`,
-    options: [`$81$`, `$90$`, `$99$`, `$100$`],
+    question: `$$234 + 342 + 423$$`,
+    options: [`$909$`, `$969$`, `$989$`, `$999$`],
     answer: 3,
-    hint: `Count the terms. The first few odd numbers add up to something familiar.`,
-    solution: `The first $n$ odd numbers add up to $n^2$. There are 10 of them here, so the sum is $10^2 = 100$. (Check with $1 + 3 = 4$ and $1 + 3 + 5 = 9$.)`,
+    hint: `Look down each column. Which digits does it hold?`,
+    solution: `Every column holds a 2, a 3 and a 4, which add to 9 with nothing to carry. So the total is $999$, that is $111 \\times 9$.`,
   },
 
   {
@@ -493,17 +493,17 @@ QBank.add([
   },
 
   {
-    id: "ma-frac-collapsing-sum",
+    id: "ma-frac-division-chain",
     category: "mental arithmetic",
-    difficulty: 2,
-    time: 25,
-    tags: ["fractions", "addition"],
+    difficulty: 1,
+    time: 15,
+    tags: ["fractions", "division"],
     source: "Flow Traders OA",
-    question: `$$\\frac{1}{2} + \\frac{1}{6} + \\frac{1}{12} + \\frac{1}{20}$$`,
-    options: [`$\\tfrac{3}{4}$`, `$\\tfrac{4}{5}$`, `$\\tfrac{5}{6}$`, `$\\tfrac{9}{10}$`],
-    answer: 1,
-    hint: `The bottoms are $1 \\times 2$, $2 \\times 3$, $3 \\times 4$ and $4 \\times 5$. Each term is the gap between two neighbouring unit fractions.`,
-    solution: `$\\tfrac{1}{2} = 1 - \\tfrac{1}{2}$, $\\tfrac{1}{6} = \\tfrac{1}{2} - \\tfrac{1}{3}$, $\\tfrac{1}{12} = \\tfrac{1}{3} - \\tfrac{1}{4}$ and $\\tfrac{1}{20} = \\tfrac{1}{4} - \\tfrac{1}{5}$. Added together, everything in the middle cancels and $1 - \\tfrac{1}{5} = \\tfrac{4}{5}$ is left.`,
+    question: `$$\\frac{1}{2} \\div \\frac{1}{4} \\div \\frac{1}{8}$$`,
+    options: [`$\\tfrac{1}{4}$`, `$1$`, `$4$`, `$16$`],
+    answer: 3,
+    hint: `Work from left to right, turning each division into a multiplication.`,
+    solution: `$\\tfrac{1}{2} \\times 4 = 2$, and then $2 \\times 8 = 16$. Divisions in a row are done in the order written; doing the second one first gives the trap $\\tfrac{1}{4}$.`,
   },
 
   {
@@ -577,17 +577,17 @@ QBank.add([
   },
 
   {
-    id: "ma-recurring-to-fraction",
+    id: "ma-frac-fortieths",
     category: "mental arithmetic",
     difficulty: 2,
-    time: 20,
+    time: 15,
     tags: ["fractions", "conversion"],
     source: "Flow Traders OA",
-    question: `Write $0.272727\\ldots$ as a fraction in lowest terms.`,
-    options: [`$\\tfrac{3}{11}$`, `$\\tfrac{5}{18}$`, `$\\tfrac{2}{7}$`, `$\\tfrac{3}{10}$`],
-    answer: 0,
-    hint: `A block of two digits repeating for ever is that block over 99.`,
-    solution: `$0.272727\\ldots = \\tfrac{27}{99} = \\tfrac{3}{11}$. One repeating digit goes over 9, two over 99, three over 999.`,
+    question: `Write $\\tfrac{7}{40}$ as a decimal.`,
+    options: [`$0.0175$`, `$0.175$`, `$0.28$`, `$1.75$`],
+    answer: 1,
+    hint: `Divide by 4 first, then by 10.`,
+    solution: `$7 \\div 4 = 1.75$, and dividing by 10 moves the point one place: $0.175$. A bottom of 40, 80 or 400 is a small divisor with zeros attached.`,
   },
 
   {

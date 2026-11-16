@@ -221,10 +221,11 @@ Not published by Wincent, so decided here: one problem and one follow-up per
 block; only the opening problem gates the next block; a problem solved after
 clues still counts. Change `formats.js` if your interviewer says otherwise.
 
-The problems are in `questions/questions-wincent.js`: 18 pairs, six at each
+The problems are in `questions/questions-wincent.js` and
+`questions/questions-wincent-2.js`: 36 pairs between them, twelve at each
 level. They are written in the style of the interview and are not a record of
 what Wincent asks; two are modelled on problems candidates have reported. All
-36 questions are also ordinary free-response questions in Practice — filter by
+72 questions are also ordinary free-response questions in Practice — filter by
 the tag `interview` to work through them — and none can be drawn into a
 multiple-choice paper. A mock takes problems you have not attempted first, so
 practising them one by one uses up fresh material for the mock.
@@ -326,6 +327,7 @@ questions/           the bank, one file per batch:
                                                        set and the generated paper do not use
                        questions-wincent.js          36 free-response interview problems:
                                                      18 opening problems, each with a follow-up
+                       questions-wincent-2.js        36 more, in the same shape
 tests.html           open it in a browser; it runs ~250 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.
