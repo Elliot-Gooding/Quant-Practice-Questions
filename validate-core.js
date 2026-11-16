@@ -146,11 +146,58 @@ const QValidate = (function () {
     if (q.source !== undefined && typeof q.source !== "string")
       at(ERROR, "source", "source must be a string");
 
+    /* -- interview fields: staged clues, a short answer, an opening-problem link -- */
+
+    const isText = t => typeof t === "string" && !!t.trim();
+
+    if (q.hints !== undefined) {
+      if (!Array.isArray(q.hints) || !q.hints.length)
+        at(ERROR, "hints", "hints must be a non-empty array of strings");
+      else {
+        q.hints.forEach((h, i) => {
+          if (!isText(h)) at(ERROR, "hints", "clue " + (i + 1) + " is not a non-empty string");
+        });
+        if (q.hint !== q.hints[0])
+          at(WARN, "hint", "hint should repeat the first entry of hints, which is what practice shows");
+      }
+    }
+
+    if (q.shortAnswer !== undefined && !isText(q.shortAnswer))
+      at(ERROR, "shortAnswer", "shortAnswer must be a non-empty string");
+
+    if (q.interview !== undefined) {
+      const iv = q.interview;
+      if (!iv || typeof iv !== "object" || Array.isArray(iv)) {
+        at(ERROR, "interview", "interview must be an object: { level, followUp, twist }");
+      } else {
+        if (hasOptions) at(ERROR, "interview", "an interview problem is free-response and cannot have options");
+        if (DIFFICULTIES.indexOf(iv.level) === -1)
+          at(ERROR, "interview", "interview.level is " + JSON.stringify(iv.level) + ", must be 1, 2 or 3");
+        if (!isText(iv.twist)) at(ERROR, "interview", "interview.twist is missing: the follow-up as the interviewer would put it");
+        if (!isText(q.shortAnswer)) at(ERROR, "shortAnswer", "an interview problem needs a shortAnswer to mark against");
+        if (!Array.isArray(q.hints)) at(WARN, "hints", "an interview problem has no staged clues");
+
+        const next = ctx.byId ? ctx.byId.get(iv.followUp) : undefined;
+        if (!isText(iv.followUp)) at(ERROR, "interview", "interview.followUp is missing");
+        else if (iv.followUp === q.id) at(ERROR, "interview", "interview.followUp points at the question itself");
+        else if (ctx.byId && !next) at(ERROR, "interview", "interview.followUp \"" + iv.followUp + "\" is not a question in the bank");
+        else if (next) {
+          if (Array.isArray(next.options)) at(ERROR, "interview", "follow-up \"" + iv.followUp + "\" has options; it must be free-response");
+          if (!isText(next.shortAnswer)) at(ERROR, "interview", "follow-up \"" + iv.followUp + "\" has no shortAnswer to mark against");
+          if (!next.solution) at(WARN, "interview", "follow-up \"" + iv.followUp + "\" has no solution");
+        }
+      }
+    }
+
     /* -- LaTeX delimiters -- */
 
     const textFields = [["question", q.question], ["hint", q.hint], ["solution", q.solution]];
     if (Array.isArray(q.options))
       q.options.forEach((opt, i) => textFields.push(["option " + (i + 1), opt]));
+    if (Array.isArray(q.hints))
+      q.hints.forEach((h, i) => textFields.push(["clue " + (i + 1), h]));
+    textFields.push(["shortAnswer", q.shortAnswer]);
+    if (q.interview && typeof q.interview === "object") textFields.push(["interview.twist", q.interview.twist]);
 
     for (const [field, text] of textFields) {
       if (typeof text !== "string" || text.indexOf("$") === -1) continue;
@@ -430,9 +477,12 @@ const QValidate = (function () {
 
     // Generated formats draw nothing from the bank, so their option count says
     // nothing about which bank questions can appear in a paper.
-    const optionCounts = [...new Set(formats.filter(f => !f.generator)
+    const optionCounts = [...new Set(formats.filter(f => !f.generator && !f.interview)
       .map(f => f.optionCount))].sort((a, b) => a - b);
-    const ctx = { optionCounts };
+    // Lets a question's interview.followUp be checked against the whole bank.
+    const byId = new Map();
+    for (const q of questions) if (q && q.id && !byId.has(q.id)) byId.set(q.id, q);
+    const ctx = { optionCounts, byId };
 
     const issues = [];
 
@@ -504,7 +554,19 @@ const QValidate = (function () {
       if (Array.isArray(q.tags)) for (const t of q.tags) tags[t] = (tags[t] || 0) + 1;
     }
 
+    const byId = new Map();
+    for (const q of questions) if (q && q.id && !byId.has(q.id)) byId.set(q.id, q);
+
     const eligibility = formats.map(f => {
+      // An interview format needs an opening problem for every block.
+      if (f.interview) {
+        const blocks = f.interview.blocks;
+        const atLevel = level => questions.filter(q => isInterviewProblem(q, byId) && q.interview.level === level);
+        const levels = [...new Set(blocks.map(b => b.level))];
+        return { id: f.id, name: f.name, questionCount: blocks.length,
+          eligible: levels.reduce((n, l) => n + atLevel(l).length, 0),
+          shortBy: blocks.filter(b => !atLevel(b.level).length).length, interview: true };
+      }
       // A generated format makes its own questions, so it is never short.
       if (f.generator)
         return { id: f.id, name: f.name, questionCount: f.questionCount,
@@ -529,6 +591,14 @@ const QValidate = (function () {
       errors: issues.filter(i => i.severity === ERROR).length,
       warnings: issues.filter(i => i.severity === WARN).length,
     };
+  }
+
+  /* Kept in step with QBank.isInterviewProblem(), for the same reason as below. */
+  function isInterviewProblem(q, byId) {
+    if (!q || Array.isArray(q.options) || !q.interview || typeof q.interview !== "object") return false;
+    if (DIFFICULTIES.indexOf(q.interview.level) === -1 || !q.shortAnswer) return false;
+    const next = byId.get(q.interview.followUp);
+    return !!next && !Array.isArray(next.options) && !!next.shortAnswer;
   }
 
   /* Kept in step with QBank.ineligibleReason(); duplicated here only so the

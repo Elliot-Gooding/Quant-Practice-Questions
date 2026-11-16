@@ -91,6 +91,20 @@ mustAnswer: true,                       // one at a time, no skipping, no going
                                         //   back: an answer is final and moves on
 ```
 
+An interview is a different kind of sitting and has its own shape — blocks
+instead of a question count, and no options, marking or navigation:
+
+```js
+{
+  id: "wincent-interview",
+  name: "Wincent quant interview — three gated blocks",
+  timeLimitSec: 45 * 60,
+  interview: { blocks: [{ level: 1, minutes: 10 }, { level: 2, minutes: 15 }, { level: 3, minutes: 20 }] },
+}
+```
+
+It draws one free-response problem of each block's level; see [Wincent](#wincent).
+
 The Optiver and IMC formats that ship are **illustrative** — plausible numbers,
 not researched. Correct them before relying on them.
 
@@ -165,6 +179,53 @@ seconds per answer by kind of question (`decimals ÷`, `fractions −`,
 the table it names the kind that is currently least accurate and the one that
 is slowest, which is usually where the next few marks are.
 
+## Wincent
+
+The **Wincent quant interview** on the Test tab is a mock of Wincent's first
+quant interview, not a paper. What is known about the real one, from the
+invitation Wincent sends and its careers pages:
+
+- 45 minutes online with one of the quant team, on problems "slightly more
+  complex" than the online test.
+- Three blocks of progressively harder questions. You reach the next block only
+  by solving the one before, so it lasts anywhere from 10 to 45 minutes.
+- They watch how you work with clues and how you reason aloud; a fast answer
+  matters less.
+- Probability, expected value, combinatorics, logic and mental maths.
+
+How the mock runs:
+
+- One problem per block, at levels easy, medium and hard, then a **follow-up**
+  that changes the problem you have just solved.
+- No options. **Ask for a clue** whenever you are stuck; clues come one at a
+  time, in the order an interviewer would give them, and the number you took is
+  recorded.
+- **Check my answer** shows the bare answer, and you mark yourself. Say your
+  answer out loud first.
+- Miss a block's opening problem and the interview ends there. You can carry on
+  for practice, but nothing after that point is scored.
+- The 45-minute clock is the only one that stops you. The time beside each block
+  (10, 15 and 20 minutes) is a guide.
+- The results give every problem with its answer, full solution and clues, and
+  the mock gets a panel on the Stats tab: parts solved out of six at each
+  sitting, with accuracy and time by block.
+
+Not published by Wincent, so decided here: one problem and one follow-up per
+block; only the opening problem gates the next block; a problem solved after
+clues still counts. Change `formats.js` if your interviewer says otherwise.
+
+The problems are in `questions/questions-wincent.js`: 18 pairs, six at each
+level. They are written in the style of the interview and are not a record of
+what Wincent asks; two are modelled on problems candidates have reported. All
+36 questions are also ordinary free-response questions in Practice — filter by
+the tag `interview` to work through them — and none can be drawn into a
+multiple-choice paper. A mock takes problems you have not attempted first, so
+practising them one by one uses up fresh material for the mock.
+
+To add a problem, write two free-response questions, give both a `shortAnswer`
+and a `hints` array, and put `interview: { level, followUp, twist }` on the
+first. `node validate.js` checks the link.
+
 ## Validating
 
 ```
@@ -201,6 +262,8 @@ The Bank tab runs the identical checks in the browser — both read
 | `f` | flag for review (test mode) |
 | `r` | review screen, or submit on a linear paper |
 | `b` | back to the paper from the review screen |
+| `c` `a` | mock interview: ask for a clue / check my answer |
+| `y` `n` | mock interview: I had it / I did not |
 
 ## What gets recorded
 
@@ -239,6 +302,7 @@ validate.js          node CLI over those rules
 app.js               routing, keyboard, shared helpers
 view-practice.js     ┐
 view-test.js         │ one file per tab; each registers itself with QApp
+view-interview.js    │ the mock interview, run inside the Test tab
 view-stats.js        │
 view-bank.js         ┘
 questions/           the bank, one file per batch:
@@ -250,7 +314,9 @@ questions/           the bank, one file per batch:
                                                      counting and market making
                        questions-flow-arithmetic.js  80 mental-arithmetic techniques
                        questions-flow-sequences.js   30 worked number series
-tests.html           open it in a browser; it runs ~190 self checks and says
+                       questions-wincent.js          36 free-response interview problems:
+                                                     18 opening problems, each with a follow-up
+tests.html           open it in a browser; it runs ~250 self checks and says
                      what failed. Uses a separate storage key, so it cannot
                      touch real practice history.
 ```

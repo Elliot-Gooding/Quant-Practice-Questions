@@ -21,6 +21,10 @@
      mustAnswer  one question at a time, no skipping, no going back: choosing
                  an option is final and moves straight on.
 
+   A format with an `interview` field is not a paper at all. It gets a panel on
+   the start screen like the others, and starting it hands the tab over to
+   view-interview.js until that mock is finished or abandoned.
+
    The run lives in memory. Navigating away asks first; reloading the page
    loses it.
    ========================================================================== */
@@ -38,7 +42,7 @@ QApp.register((function () {
   const MIN_ANSWER_MS = (typeof window !== "undefined" && window.QTEST_NO_ANSWER_GUARD) ? 0 : 250;
 
   let root = null;
-  let screen = "start";         // start | running | review | results
+  let screen = "start";         // start | running | review | results | interview
   let format = null;
   let run = null;               // the paper in progress, or the one just sat
   let enteredAt = null;         // when the current question was opened
@@ -49,6 +53,8 @@ QApp.register((function () {
   function mount(node) {
     root = node;
     if (screen === "running" || screen === "review") stopClock();
+    // A finished mock interview shows its results again, like a finished paper.
+    if (screen === "interview" && QInterview.resume(node)) return;
     // Coming back to the tab after finishing shows the results again; otherwise
     // start fresh.
     if (screen !== "results") screen = "start";
@@ -57,12 +63,21 @@ QApp.register((function () {
 
   function unmount() {
     stopClock();
+    if (screen === "interview") QInterview.unmount();
     root = null;
   }
 
   function canLeave() {
+    if (screen === "interview")
+      return QInterview.inProgress() ? "A mock interview is in progress. Leave and abandon it?" : null;
     if (screen !== "running" && screen !== "review") return null;
     return "A test is in progress. Leave and abandon it?";
+  }
+
+  /* Hand the tab to the mock interview until it gives it back. */
+  function startInterview(fmt) {
+    screen = "interview";
+    if (!QInterview.start(fmt, root, () => { screen = "start"; render(); })) screen = "start";
   }
 
   /* The question behind a paper item. Generated questions live only in the run
@@ -342,6 +357,7 @@ QApp.register((function () {
     const attempted = QStore.attemptedIds();
 
     const rows = formats.map(f => {
+      if (f.interview) return QInterview.row(f);
       if (f.generator) return generatedRow(f);
       const pool = QBank.eligible(f);
       const eligible = pool.length;
@@ -376,6 +392,9 @@ QApp.register((function () {
 
     root.innerHTML = rows;
 
+    for (const button of root.querySelectorAll("[data-interview]"))
+      button.addEventListener("click", () => startInterview(QFormats.get(button.dataset.interview)));
+
     for (const button of root.querySelectorAll("[data-generate]"))
       button.addEventListener("click", () => {
         const f = QFormats.get(button.dataset.generate);
@@ -395,6 +414,7 @@ QApp.register((function () {
         startRun(f, n, Math.max(60, Math.round(f.timeLimitSec * n / f.questionCount)));
       });
 
+    QApp.renderMath(root);
     QApp.setStatus("A paper only uses questions with exactly the right number of options. " +
       "The Bank tab shows which questions still need them.");
   }
@@ -734,6 +754,7 @@ QApp.register((function () {
   /* ---- Keyboard --------------------------------------------------------------------- */
 
   function onKey(e) {
+    if (screen === "interview") return QInterview.onKey(e);
     if (screen === "review") {
       if (e.key === "b") { screen = "running"; enteredAt = Date.now(); render(); return true; }
       if (e.key === "Enter") { if (confirmSubmit()) submit(false); return true; }

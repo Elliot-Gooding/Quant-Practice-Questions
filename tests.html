@@ -36,9 +36,11 @@
 <script src="questions/questions-flow-arithmetic.js"></script>
 <script src="questions/questions-flow-sequences.js"></script>
 <script src="questions/questions-quant-oa.js"></script>
+<script src="questions/questions-wincent.js"></script>
 <script src="store.js"></script>
 <script src="app.js"></script>
 <script src="view-practice.js"></script>
+<script src="view-interview.js"></script>
 <script src="view-test.js"></script>
 <script src="view-stats.js"></script>
 <script src="view-bank.js"></script>
@@ -823,6 +825,215 @@ function drawTests() {
 
 /* Runs last: a refused format is remembered as a load problem, and the Bank
    view would then (rightly) stop reporting a clean bank. */
+/* ==========================================================================
+   MOCK INTERVIEW
+   ========================================================================== */
+
+function interviewTests() {
+  section("mock interview");
+  const realConfirm = window.confirm;
+  window.confirm = () => true;
+
+  const F = QFormats.get("wincent-interview");
+  const testView = QApp.views().filter(v => v.name === "test")[0];
+  const last = () => { const t = QStore.tests(); return t[t.length - 1]; };
+  const norm = t => t.replace(/\s+/g, " ").trim();
+  const textOf = html => { const d = document.createElement("div"); d.innerHTML = html; return norm(d.textContent); };
+  const begin = () => {
+    QApp.go("test", { force: true });
+    if ($("#again")) $("#again").click();             // a paper's results from an earlier check
+    if ($("#mock-back")) $("#mock-back").click();
+    $('[data-interview="wincent-interview"]').click();
+  };
+  const solve = right => { $("#answer").click(); $('[data-mark="' + (right ? 1 : 0) + '"]').click(); };
+  const where = () => $(".controls") ? norm($(".controls").textContent) : "";
+  const partName = () => norm($(".interview .meta").textContent);
+  const clues = () => document.querySelectorAll(".clues li").length;
+
+  try {
+    /* -- the problems -- */
+    const openings = QBank.all().filter(q => QBank.isInterviewProblem(q));
+    check("six opening problems at each level",
+      [1, 2, 3].map(l => QBank.interviewProblems(l).length), [6, 6, 6]);
+    check("every one has a follow-up with its own answer, solution and clues", openings.every(q => {
+      const n = QBank.get(q.interview.followUp);
+      return !!n && !n.interview && !!n.shortAnswer && !!n.solution && Array.isArray(n.hints) && n.hints.length >= 2;
+    }), true);
+    check("no follow-up is shared between two problems",
+      new Set(openings.map(q => q.interview.followUp)).size, openings.length);
+    check("the first clue doubles as the practice hint",
+      QBank.all().filter(q => Array.isArray(q.hints)).every(q => q.hint === q.hints[0]), true);
+    check("the interview format draws exactly the opening problems", QBank.eligible(F).length, 18);
+    check("no interview question can be drawn into a multiple-choice paper",
+      QFormats.all().filter(f => !f.interview && !f.generator)
+        .every(f => QBank.eligible(f).every(q => !q.hints && !q.interview && !q.shortAnswer)), true);
+
+    /* -- the validator's rules for them -- */
+    const errorsIn = list => QValidate.validate({ questions: list, formats: [] }).issues
+      .filter(i => i.severity === QValidate.ERROR).map(i => i.field);
+    const base = { category: "x", difficulty: 1, time: 60, question: "q", hint: "h", hints: ["h"],
+      solution: "s", shortAnswer: "a" };
+    const follow = Object.assign({}, base, { id: "f" });
+    const opening = extra => Object.assign({}, base, { id: "o", interview: { level: 1, followUp: "f", twist: "t" } }, extra);
+    check("a sound opening problem and follow-up pass", errorsIn([opening(), follow]), []);
+    check("a follow-up that is not in the bank is an error", errorsIn([opening()]), ["interview"]);
+    check("so is an opening problem with options",
+      errorsIn([opening({ options: ["a", "b"], answer: 0 }), follow]).includes("interview"), true);
+    check("so is a level outside 1 to 3",
+      errorsIn([opening({ interview: { level: 4, followUp: "f", twist: "t" } }), follow]), ["interview"]);
+    check("so is a follow-up with no short answer",
+      errorsIn([opening(), Object.assign({}, follow, { shortAnswer: undefined })]), ["interview"]);
+    check("so is an opening problem with no twist",
+      errorsIn([opening({ interview: { level: 1, followUp: "f" } }), follow]), ["interview"]);
+
+    /* -- every block cleared -- */
+    QStore.reset();
+    begin();
+    check("the mock opens on block 1", /Block 1 of 3/.test(where()), true);
+    check("with the opening problem", partName(), "Opening problem");
+    check("nothing to mark against is visible yet",
+      [!!$("#shortanswer"), document.querySelectorAll("[data-mark]").length, clues()], [false, 0, 0]);
+    $("#clue").click();
+    check("asking for a clue shows one", clues(), 1);
+    $("#clue").click();
+    check("and asking again shows the next", clues(), 2);
+    $("#answer").click();
+    check("checking shows the answer and the two ways to mark it",
+      [!!norm($("#shortanswer").textContent), document.querySelectorAll("[data-mark]").length, !!$("#clue")],
+      [true, 2, false]);
+    const first = QInterview.state().run.blocks[0];
+    $('[data-mark="1"]').click();
+    check("solving the opening problem brings its follow-up",
+      [partName(), /Block 1 of 3/.test(where()), !!$(".earlier")], ["Follow-up", true, true]);
+    check("put as a twist on the problem still on the table",
+      [norm($("#qtext").textContent), norm($(".earlier").textContent).includes(textOf(QBank.get(first.parts[0].qid).question))],
+      [textOf(QBank.get(first.parts[0].qid).interview.twist), true]);
+    $("#clue").click();
+    check("the follow-up has its own clues",
+      norm($(".clues li").textContent), textOf(QBank.get(first.parts[1].qid).hints[0]));
+    solve(false);
+    check("a missed follow-up still moves on to block 2",
+      [/Block 2 of 3/.test(where()), partName()], [true, "Opening problem"]);
+    solve(true); solve(true);
+    check("then block 3", /Block 3 of 3/.test(where()), true);
+    solve(true); solve(true);
+    check("clearing every block ends on the results", $("h2").textContent, "You cleared all 3 blocks");
+    const a = last();
+    check("stored as a sitting: five of six parts solved",
+      [a.formatId, a.score, a.max, a.counts], ["wincent-interview", 5, 6, { correct: 5, wrong: 1, skipped: 0 }]);
+    check("with what the interview came to",
+      a.interview, { blocks: 3, cleared: 3, stoppedAt: null, practisedOn: false });
+    check("each part filed under its block", a.items.map(i => i.kind),
+      ["block 1", "block 1", "block 2", "block 2", "block 3", "block 3"]);
+    check("clues taken are kept", [a.items[0].clues, a.items[1].clues, a.items[2].clues], [2, 1, 0]);
+    check("no problem appears twice in a mock", new Set(a.items.map(i => i.qid)).size, 6);
+    check("blocks come at rising levels",
+      a.items.filter((x, i) => i % 2 === 0).map(i => QBank.get(i.qid).interview.level), [1, 2, 3]);
+    check("each follow-up belongs to its opening problem",
+      [0, 2, 4].every(i => QBank.get(a.items[i].qid).interview.followUp === a.items[i + 1].qid), true);
+    const history = QStore.attempts();
+    check("all six problems go into the question history",
+      [history.length, history.every(x => x.mode === "test" && x.testId === a.id),
+       history[0].hintUsed, history[2].hintUsed, history[1].outcome], [6, true, true, false, "wrong"]);
+    check("results give every problem with its answer and solution",
+      [document.querySelectorAll(".detail").length, norm($("#view").textContent).includes(textOf(QBank.get(a.items[5].qid).shortAnswer))],
+      [6, true]);
+    check("a finished mock can be left without a prompt", testView.canLeave(), null);
+
+    QApp.go("stats", { force: true });
+    const panel = $('[data-paper="wincent-interview"]');
+    check("the stats tab gives the mock its own panel",
+      [!!panel, !!panel && /cleared\s+3 of 3 blocks/.test(panel.textContent), !!panel && /latest\s+5 \/ 6/.test(panel.textContent)],
+      [true, true, true]);
+    QApp.go("test", { force: true });
+    check("coming back to the tab shows the results again", $("h2").textContent, "You cleared all 3 blocks");
+
+    /* -- the gate closes -- */
+    QStore.reset();
+    begin();
+    solve(true); solve(true); solve(false);
+    check("missing an opening problem ends the interview", $("h2").textContent, "The interview would end here");
+    check("which is still open until you choose", testView.canLeave() !== null, true);
+    $("#see-results").click();
+    check("the results say where it stopped", $("h2").textContent, "Stopped at block 2 of 3");
+    const b = last();
+    check("only what was sat is scored", [b.score, b.max, b.counts, b.interview],
+      [2, 6, { correct: 2, wrong: 1, skipped: 3 }, { blocks: 3, cleared: 1, stoppedAt: 2, practisedOn: false }]);
+    check("three problems in the history, and the unopened block's problem still unseen",
+      [QStore.attempts().length, QStore.attemptedIds().has(b.items[4].qid)], [3, false]);
+
+    /* -- the next mock, and running out of time -- */
+    const seenBefore = QStore.attemptedIds();
+    begin();
+    check("the next mock takes opening problems not attempted yet",
+      QInterview.state().run.blocks.every(bl => !seenBefore.has(bl.parts[0].qid)), true);
+    check("leaving mid-interview asks first", /mock interview is in progress/.test(testView.canLeave() || ""), true);
+    QInterview.finish();
+    check("the clock running out ends it where it stands", $("h2").textContent, "Time ran out in block 1 of 3");
+    const t = last();
+    check("with nothing scored and nothing added to the history",
+      [t.score, t.counts, t.autoSubmitted, QStore.attempts().length], [0, { correct: 0, wrong: 0, skipped: 6 }, true, 3]);
+    $("#mock-again").click();
+    check("another mock starts straight from the results", /Block 1 of 3/.test(where()), true);
+    QInterview.finish();
+    $("#mock-back").click();
+    check("and the results lead back to the list of tests", !!$('[data-interview="wincent-interview"]'), true);
+
+    /* -- carrying on for practice -- */
+    QStore.reset();
+    begin();
+    solve(false);
+    check("the gate can close on block 1", $("h2").textContent, "The interview would end here");
+    $("#carry-on").click();
+    check("carrying on opens block 2, marked as practice",
+      [/Block 2 of 3/.test(where()), /practice only/.test(where())], [true, true]);
+    solve(true); solve(true);
+    check("practice runs on into block 3", /Block 3 of 3/.test(where()), true);
+    solve(false);
+    check("and ends on the results, still stopped at block 1", $("h2").textContent, "Stopped at block 1 of 3");
+    const c = last();
+    check("nothing practised is scored", [c.score, c.counts, c.interview],
+      [0, { correct: 0, wrong: 1, skipped: 5 }, { blocks: 3, cleared: 0, stoppedAt: 1, practisedOn: true }]);
+    check("but it is kept on the record and in the history",
+      [c.items.map(i => i.practised), QStore.attempts().length],
+      [[null, null, "correct", "correct", "wrong", null], 4]);
+
+    /* -- missing the last block -- */
+    QStore.reset();
+    begin();
+    solve(true); solve(true); solve(true); solve(true); solve(false);
+    check("missing the last block goes straight to the results", $("h2").textContent, "Stopped at block 3 of 3");
+    check("two blocks cleared", last().interview, { blocks: 3, cleared: 2, stoppedAt: 3, practisedOn: false });
+
+    /* -- keyboard -- */
+    QStore.reset();
+    begin();
+    key("y");
+    check("marking keys do nothing before the answer is shown", partName(), "Opening problem");
+    key("c");
+    check("C asks for a clue", clues(), 1);
+    while (!$("#clue").disabled) key("c");
+    check("clues stop when they run out",
+      [clues(), norm($("#clue").textContent)],
+      [QBank.get(QInterview.state().run.blocks[0].parts[0].qid).hints.length, "No more clues"]);
+    key("a");
+    check("A checks the answer", !!$("#shortanswer"), true);
+    key("y");
+    check("Y marks it solved", partName(), "Follow-up");
+    key("a"); key("n");
+    check("N marks it missed", /Block 2 of 3/.test(where()), true);
+    QInterview.finish();
+    $("#mock-back").click();
+
+    QApp.go("bank", { force: true });
+    check("the bank view shows the interview as ready",
+      /Wincent quant interview[\s\S]*ready — 6 \/ 6 \/ 6 opening problems/.test($("#view").textContent), true);
+  } finally {
+    window.confirm = realConfirm;
+    QStore.reset();
+  }
+}
+
 function formatCheckTests() {
   section("format checks");
   check("malformed format fields are refused", (() => {
@@ -831,6 +1042,10 @@ function formatCheckTests() {
       marking: { correct: 1, incorrect: 0, skipped: 0 }, navigation: "free", mustAnswer: true }]);
     QFormats.add([{ id: "bad-2", name: "x", questionCount: 1, timeLimitSec: 1, optionCount: 4,
       marking: { correct: 1, incorrect: 0, skipped: 0 }, navigation: "free", categories: "sequences" }]);
+    QFormats.add([{ id: "bad-3", name: "x", timeLimitSec: 60, interview: { blocks: [] } }]);
+    QFormats.add([{ id: "bad-4", name: "x", timeLimitSec: 60, interview: { blocks: [{ level: 4, minutes: 5 }] } }]);
+    QFormats.add([{ id: "bad-5", name: "x", interview: { blocks: [{ level: 1, minutes: 5 }] } }]);
+    QFormats.add([{ id: "bad-6", name: "x", timeLimitSec: 60, interview: { blocks: [{ level: 1 }] } }]);
     return QFormats.all().length - before;
   })(), 0);
 }
@@ -842,6 +1057,7 @@ window.addEventListener("load", () => {
     practiceTests();
     testViewTests();
     sprintTests();
+    interviewTests();
     drawTests();
     generatorTests();
     dashboardTests();

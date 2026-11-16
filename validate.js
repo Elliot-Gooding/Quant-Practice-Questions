@@ -186,7 +186,7 @@ console.log("  " + (tagNames.length
 console.log(c.bold("\nTest eligibility"));
 for (const e of s.eligibility) {
   const ok = e.shortBy === 0;
-  console.log("  " + pad(e.id, 16) + pad(e.generated ? "generated" : e.eligible + " / " + e.questionCount, 12) +
+  console.log("  " + pad(e.id, 19) + pad(e.generated ? "generated" : e.interview ? e.eligible + " problems" : e.eligible + " / " + e.questionCount, 12) +
     (ok ? c.green("ready") : c.yellow(e.shortBy + " short")));
 }
 

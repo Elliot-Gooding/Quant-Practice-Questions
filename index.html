@@ -178,6 +178,19 @@
   table.kinds td.barcell { width: 22%; }
   .paper h2:first-child { margin-top: 0; }
 
+  /* Mock interview: the problem, then whatever has been asked for beneath it */
+  .interview .label, .detail .label { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-bottom: .5rem; }
+  .interview .earlier {
+    color: var(--muted); font-size: 16px; line-height: 1.5;
+    border-left: 2px solid var(--panel-edge); padding-left: 1rem; margin-bottom: 1.5rem;
+  }
+  .interview .then { color: var(--accent); }
+  .clues ol, .detail ol { margin: 0; padding-left: 1.25rem; }
+  .clues li + li, .detail li + li { margin-top: .4rem; }
+  #shortanswer { font-size: 21px; }
+  .selfgrade kbd, nav.actions kbd { margin-left: .35rem; }
+  .primary kbd { color: var(--accent-ink); border-color: rgba(15,27,45,.35); }
+
   /* Hint / solution unfold beneath the question */
   .reveal { display: none; border-top: 1px solid var(--panel-edge); margin-top: 1.75rem; padding-top: 1.5rem; }
   .reveal.open { display: block; }
@@ -305,11 +318,13 @@
 <script src="questions/questions-flow-arithmetic.js"></script>
 <script src="questions/questions-flow-sequences.js"></script>
 <script src="questions/questions-quant-oa.js"></script>
+<script src="questions/questions-wincent.js"></script>
 
 <!-- App. store.js and app.js before the views, which register themselves. -->
 <script src="store.js"></script>
 <script src="app.js"></script>
 <script src="view-practice.js"></script>
+<script src="view-interview.js"></script>
 <script src="view-test.js"></script>
 <script src="view-stats.js"></script>
 <script src="view-bank.js"></script>

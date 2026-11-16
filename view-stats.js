@@ -102,8 +102,13 @@ QApp.register((function () {
     return kinds;
   }
 
-  const blankWord = t => (QFormats.get(t.formatId) || {}).mustAnswer ? "not reached" : "skipped";
+  const blankWord = t => {
+    const f = QFormats.get(t.formatId) || {};
+    return f.mustAnswer || f.interview || t.interview ? "not reached" : "skipped";
+  };
   const one = x => (Math.round(x * 10) / 10).toFixed(1);
+  /* Time per answer: tenths of a second for a sprint, minutes for an interview problem. */
+  const per = sec => sec >= 120 ? QApp.fmtClock(sec) : one(sec) + "s";
 
   /* Round axis steps: 1, 2, 5, 10, 20, 50 ... at most five ticks. */
   function ticksFor(lo, hi) {
@@ -177,10 +182,10 @@ QApp.register((function () {
         <td class="num subtle">${r ? r.n : 0}</td>
         ${r ? `<td class="num">${QApp.pct(r.correct / r.n)}</td>
                <td class="barcell">${bar(r.correct / r.n, r.correct + " of " + r.n + " right")}</td>
-               <td class="num">${one(r.ms / r.n / 1000)}s</td>`
+               <td class="num">${per(r.ms / r.n / 1000)}</td>`
             : `<td class="num subtle">—</td><td class="barcell"></td><td class="num subtle">—</td>`}
         <td class="num subtle">${QApp.pct(a.correct / a.n)}</td>
-        <td class="num subtle">${one(a.ms / a.n / 1000)}s</td>
+        <td class="num subtle">${per(a.ms / a.n / 1000)}</td>
       </tr>`;
     }).join("");
 
@@ -191,7 +196,7 @@ QApp.register((function () {
       const slowest = judged.slice().sort((a, b) => b[1].ms / b[1].n - a[1].ms / a[1].n)[0];
       callout = `<p class="subtle">Lately the least accurate kind is <b>${QApp.escapeHtml(weakest[0])}</b>
         (${QApp.pct(weakest[1].correct / weakest[1].n)}) and the slowest is <b>${QApp.escapeHtml(slowest[0])}</b>
-        (${one(slowest[1].ms / slowest[1].n / 1000)}s an answer). Only kinds with at least ${ENOUGH} recent answers are compared.</p>`;
+        (${per(slowest[1].ms / slowest[1].n / 1000)} an answer). Only kinds with at least ${ENOUGH} recent answers are compared.</p>`;
     }
     const span = Math.min(RECENT, sittings.length);
     return `
@@ -224,6 +229,9 @@ QApp.register((function () {
           best <b>${best.score} / ${best.max}</b>${recent.length > 1
             ? ` &middot; average of the last ${recent.length} <b>${one(mean)}${sameMax ? "" : "%"}</b>` : ""}
         </p>
+        ${latest.interview ? `<p class="subtle">The score is parts solved out of ${latest.max}: an opening
+          problem and a follow-up in each of ${latest.interview.blocks} blocks. The latest sitting cleared
+          ${latest.interview.cleared} of ${latest.interview.blocks} blocks.</p>` : ""}
         ${scoreChart(sittings)}
         ${sittings.length === 1 ? `<p class="subtle">One sitting so far. The line appears from the second.</p>` : ""}
         ${kindTable(sittings)}

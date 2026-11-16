@@ -31,6 +31,17 @@
                     back: choosing an option is final and moves straight on.
                     Needs navigation: 'linear'. Questions never reached score
                     marking.skipped.
+
+   An INTERVIEW format is a different kind of sitting — spoken-style problems
+   with no options, which you mark yourself — and has its own shape:
+
+     interview      { blocks: [{ level, minutes }, ...] }. One opening problem
+                    of that level is drawn for each block, with its follow-up.
+                    A block whose opening problem you do not solve ends the
+                    interview. `minutes` is a guide shown beside the block, not
+                    a limit; timeLimitSec is the only clock that stops you.
+                    questionCount, optionCount, marking and navigation are not
+                    used and can be left out.
    ========================================================================== */
 
 QFormats.add([
@@ -117,6 +128,49 @@ QFormats.add([
       found a rule that fits every term. Pen and paper are allowed, a
       calculator is not. Easier series come first here; the real order is not
       published. Four options is an assumption; the host does not say.`,
+  },
+
+  /* ------------------------------------------------------------------------
+     WINCENT — first quant interview. Researched November 2026.
+
+     From the invitation Wincent sends, and its own careers pages:
+       - 45 minutes online with one of the quant team, on problems "slightly
+         more complex" than the online test.
+       - three blocks of progressively harder questions. You reach the next
+         block only by correctly solving the question(s) of the one before, so
+         the interview lasts anywhere from 10 to 45 minutes.
+       - they are watching how you work with clues, your approach, and how you
+         react; reasoning aloud counts for more than a fast answer.
+       - topics: probability, expected value, combinatorics, logic puzzles,
+         mental maths. Candidates report problems read aloud over a video call.
+
+     NOT published, so the numbers below are judgements:
+       - how many questions a block has. Here: one problem and one follow-up.
+       - whether the follow-up gates the next block. Here only the opening
+         problem does.
+       - how long a block lasts. 10 / 15 / 20 minutes is a guide that adds up
+         to 45; only the 45-minute clock stops you.
+       - whether a problem solved only after clues still counts. Here it does,
+         and the clues you took are recorded.
+     --------------------------------------------------------------------- */
+
+  {
+    id: "wincent-interview",
+    name: "Wincent quant interview — three gated blocks",
+    timeLimitSec: 45 * 60,
+    interview: {
+      blocks: [
+        { level: 1, minutes: 10 },
+        { level: 2, minutes: 15 },
+        { level: 3, minutes: 20 },
+      ],
+    },
+    note: `Three blocks, each harder than the last: one problem, then a follow-up
+      that changes it. Talk your reasoning through out loud, as you would to
+      the interviewer, and ask for a clue when you are stuck rather than
+      sitting in silence — how you use clues is part of what they watch. You
+      mark yourself against the answer. Miss a block's opening problem and the
+      interview ends there, as the real one would.`,
   },
 
   /* ------------------------------------------------------------------------
